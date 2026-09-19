@@ -1,0 +1,2301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Veilix &mdash; Privacy-Preserving Customer Data Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ==========================================================================
+   0. DESIGN TOKENS
+   ========================================================================== */
+:root{
+  --bg:            #090D14;
+  --bg-alt:        #0C111B;
+  --panel:         #0F1522;
+  --card:          #131A29;
+  --card-hover:    #17202F;
+  --border:        #212B3D;
+  --border-soft:   #1A2332;
+  --text:          #E8ECF4;
+  --text-dim:      #A6B0C3;
+  --text-faint:    #6B7690;
+
+  --teal:          #34D6BE;
+  --teal-dim:      #1A4F49;
+  --teal-bg:       rgba(52,214,190,0.10);
+
+  --amber:         #E7A83D;
+  --amber-bg:      rgba(231,168,61,0.10);
+
+  --red:           #E15D63;
+  --red-bg:        rgba(225,93,99,0.10);
+
+  --blue:          #4C8FEE;
+  --blue-bg:       rgba(76,143,238,0.10);
+
+  --violet:        #9C7BEF;
+  --violet-bg:     rgba(156,123,239,0.10);
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+
+  --shadow-1: 0 1px 2px rgba(0,0,0,0.4);
+  --shadow-2: 0 8px 24px rgba(0,0,0,0.35);
+
+  --font-sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
+
+  --sidebar-w: 248px;
+  --topbar-h: 62px;
+}
+
+[data-theme="light"]{
+  --bg:            #F3F5F9;
+  --bg-alt:        #EBEEF3;
+  --panel:         #FFFFFF;
+  --card:          #FFFFFF;
+  --card-hover:    #F5F7FA;
+  --border:        #DFE3EB;
+  --border-soft:   #E7EAF0;
+  --text:          #131A29;
+  --text-dim:      #4C5568;
+  --text-faint:    #8A93A8;
+  --teal-bg:       rgba(19,148,128,0.08);
+  --amber-bg:      rgba(180,120,10,0.10);
+  --red-bg:        rgba(200,50,60,0.08);
+  --blue-bg:       rgba(30,100,210,0.08);
+  --violet-bg:     rgba(120,80,210,0.08);
+  --teal:          #128A76;
+  --amber:         #B4780A;
+  --red:           #C8323C;
+  --blue:          #1E64D2;
+  --violet:        #7850D2;
+  --shadow-1: 0 1px 2px rgba(20,30,50,0.06);
+  --shadow-2: 0 10px 30px rgba(20,30,50,0.10);
+}
+
+*, *::before, *::after{ box-sizing: border-box; }
+html,body{ height:100%; }
+body{
+  margin:0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4{ margin:0; font-weight:600; letter-spacing:-0.01em; }
+p{ margin:0; }
+a{ color:inherit; }
+button{ font-family:inherit; }
+::selection{ background: var(--teal-bg); }
+::-webkit-scrollbar{ width:10px; height:10px; }
+::-webkit-scrollbar-thumb{ background: var(--border); border-radius:8px; }
+::-webkit-scrollbar-track{ background: transparent; }
+.hidden{ display:none !important; }
+.mono{ font-family: var(--font-mono); }
+:focus-visible{ outline: 2px solid var(--teal); outline-offset: 2px; }
+
+/* ==========================================================================
+   1. LOGIN SCREEN
+   ========================================================================== */
+#loginScreen{
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:
+    radial-gradient(circle at 15% 20%, rgba(52,214,190,0.08), transparent 45%),
+    radial-gradient(circle at 85% 80%, rgba(76,143,238,0.08), transparent 45%),
+    var(--bg);
+  padding: 32px 16px;
+}
+.login-shell{
+  width:100%;
+  max-width: 880px;
+  background: var(--panel);
+  border:1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-2);
+  overflow:hidden;
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+}
+@media (max-width: 760px){ .login-shell{ grid-template-columns:1fr; } .login-side{ display:none; } }
+
+.login-side{
+  background:
+    linear-gradient(160deg, #0D1B22 0%, #0A0F19 60%);
+  border-right:1px solid var(--border);
+  padding: 40px 34px;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  position:relative;
+}
+.login-side .flow-mini{ display:flex; flex-direction:column; gap:10px; margin-top:28px; }
+.flow-mini .fm-step{ display:flex; align-items:center; gap:10px; font-size:12.5px; color:var(--text-dim); }
+.flow-mini .fm-dot{ width:7px; height:7px; border-radius:50%; background:var(--teal); flex:none; box-shadow:0 0 0 3px var(--teal-bg); }
+.login-side .tagline{ font-size:13px; color:var(--text-faint); line-height:1.6; max-width:300px; }
+
+.brand-mark{ display:flex; align-items:center; gap:10px; }
+.brand-mark .glyph{ width:34px; height:34px; }
+.brand-mark span{ font-size:17px; font-weight:600; letter-spacing:-0.01em; }
+
+.login-main{ padding: 40px 36px; }
+.login-main h1{ font-size:22px; margin-bottom:6px; }
+.login-main .sub{ color:var(--text-dim); font-size:13px; margin-bottom:26px; }
+
+.role-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px; }
+.role-card{
+  border:1px solid var(--border);
+  background: var(--card);
+  border-radius: var(--radius-md);
+  padding:14px;
+  cursor:pointer;
+  text-align:left;
+  transition: border-color .15s ease, background .15s ease, transform .1s ease;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.role-card:hover{ background: var(--card-hover); border-color:#33415a; }
+.role-card.selected{ border-color: var(--teal); background: var(--teal-bg); }
+.role-card .r-title{ font-weight:600; font-size:13.5px; }
+.role-card .r-desc{ font-size:11.5px; color:var(--text-faint); }
+
+.field-group{ margin-bottom:16px; }
+.field-group label{ display:block; font-size:12px; color:var(--text-dim); margin-bottom:6px; }
+.field-group input, .field-group select, .field-group textarea{
+  width:100%;
+  background: var(--bg-alt);
+  border:1px solid var(--border);
+  color:var(--text);
+  border-radius: var(--radius-sm);
+  padding:9px 11px;
+  font-size:13.5px;
+  font-family: inherit;
+}
+.field-group input:focus, .field-group select:focus, .field-group textarea:focus{
+  border-color: var(--teal);
+}
+.field-hint{ font-size:11px; color:var(--text-faint); margin-top:5px; }
+
+.login-note{
+  margin-top:14px;
+  font-size:11.5px;
+  color: var(--text-faint);
+  border-top:1px dashed var(--border);
+  padding-top:12px;
+  line-height:1.6;
+}
+
+/* ==========================================================================
+   2. APP SHELL
+   ========================================================================== */
+#app{ display:flex; min-height:100vh; }
+
+#sidebar{
+  width: var(--sidebar-w);
+  flex:none;
+  background: var(--panel);
+  border-right:1px solid var(--border);
+  display:flex;
+  flex-direction:column;
+  position:fixed;
+  top:0; left:0; bottom:0;
+  z-index:40;
+  transition: transform .2s ease;
+}
+.sidebar-top{ padding:18px 18px 14px; border-bottom:1px solid var(--border-soft); }
+.sidebar-top .brand-mark span{ font-size:15px; }
+.sidebar-top .brand-sub{ font-size:10.5px; color:var(--text-faint); margin-top:2px; letter-spacing:.02em; }
+
+#navList{ list-style:none; margin:0; padding:10px; flex:1; overflow-y:auto; }
+.nav-item{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:9px 12px;
+  border-radius: var(--radius-sm);
+  color: var(--text-dim);
+  cursor:pointer;
+  font-size:13px;
+  font-weight:500;
+  margin-bottom:2px;
+  transition: background .12s ease, color .12s ease;
+  border:1px solid transparent;
+}
+.nav-item svg{ width:16px; height:16px; flex:none; opacity:.85; }
+.nav-item:hover{ background: var(--card); color: var(--text); }
+.nav-item.active{ background: var(--teal-bg); color: var(--teal); border-color: rgba(52,214,190,0.25); }
+.nav-item.active svg{ opacity:1; }
+
+.sidebar-bottom{ padding:14px; border-top:1px solid var(--border-soft); }
+.status-chip{ display:flex; align-items:center; gap:8px; font-size:11.5px; color:var(--text-dim); padding:8px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); margin-bottom:10px; background:var(--card); }
+.status-dot{ width:7px; height:7px; border-radius:50%; flex:none; background:var(--text-faint); }
+.status-dot.online{ background: var(--teal); box-shadow:0 0 0 3px var(--teal-bg); }
+.status-dot.offline{ background: var(--red); box-shadow:0 0 0 3px var(--red-bg); }
+.user-box{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.user-box .u-meta{ min-width:0; }
+.user-box .u-name{ font-size:12.5px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.user-box .u-role{ font-size:10.5px; color:var(--text-faint); }
+.icon-btn{ background:transparent; border:1px solid var(--border); color:var(--text-dim); border-radius:var(--radius-sm); padding:6px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+.icon-btn:hover{ background:var(--card); color:var(--text); }
+.icon-btn svg{ width:14px; height:14px; }
+
+.main-wrapper{ margin-left: var(--sidebar-w); flex:1; min-width:0; display:flex; flex-direction:column; }
+
+#topbar{
+  height: var(--topbar-h);
+  border-bottom:1px solid var(--border);
+  background: var(--panel);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding: 0 22px;
+  position:sticky; top:0; z-index:30;
+}
+#topbar .tb-left{ display:flex; align-items:center; gap:12px; min-width:0; }
+#topbar .tb-title{ font-size:16px; font-weight:600; }
+#topbar .tb-crumb{ font-size:11.5px; color:var(--text-faint); }
+#topbar .tb-right{ display:flex; align-items:center; gap:10px; }
+.menu-toggle{ display:none; }
+
+.badge-role{ font-size:10.5px; padding:4px 9px; border-radius:20px; border:1px solid var(--border); color:var(--text-dim); background:var(--card); font-weight:600; letter-spacing:.02em; }
+
+#content{ padding: 22px 26px 60px; flex:1; }
+.page{ display:flex; flex-direction:column; gap:20px; }
+
+/* ==========================================================================
+   3. PRIMITIVES: cards, buttons, badges, tables, forms
+   ========================================================================== */
+.card{
+  background: var(--card);
+  border:1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding:18px 20px;
+}
+.card-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:14px; flex-wrap:wrap; }
+.card-head h3{ font-size:14.5px; }
+.card-head .card-desc{ font-size:12px; color:var(--text-faint); margin-top:3px; }
+.card-actions{ display:flex; gap:8px; flex-wrap:wrap; }
+
+.grid{ display:grid; gap:16px; }
+.grid-metrics{ grid-template-columns: repeat(5, 1fr); }
+.grid-2{ grid-template-columns: 1fr 1fr; }
+.grid-3{ grid-template-columns: 1fr 1fr 1fr; }
+@media (max-width:1200px){ .grid-metrics{ grid-template-columns: repeat(3,1fr); } }
+@media (max-width:820px){ .grid-metrics{ grid-template-columns: repeat(2,1fr); } .grid-2, .grid-3{ grid-template-columns:1fr; } }
+
+.metric-card{
+  background: var(--card);
+  border:1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding:14px 16px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.metric-card .m-label{ font-size:11.5px; color:var(--text-faint); font-weight:500; }
+.metric-card .m-value{ font-size:24px; font-weight:600; font-family: var(--font-mono); }
+.metric-card .m-value.skeleton{ color:var(--text-faint); }
+.metric-card .m-icon{ width:26px; height:26px; border-radius:7px; display:flex; align-items:center; justify-content:center; }
+.metric-card .m-icon svg{ width:14px; height:14px; }
+
+.btn{
+  display:inline-flex; align-items:center; gap:7px;
+  padding:9px 15px;
+  border-radius: var(--radius-sm);
+  font-size:13px;
+  font-weight:600;
+  border:1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  cursor:pointer;
+  transition: all .12s ease;
+  white-space:nowrap;
+}
+.btn svg{ width:14px; height:14px; }
+.btn:hover{ background: var(--card-hover); }
+.btn:disabled{ opacity:.5; cursor:not-allowed; }
+.btn-primary{ background: var(--teal); border-color: var(--teal); color:#04201B; }
+.btn-primary:hover{ filter:brightness(1.06); }
+.btn-danger{ background: transparent; border-color: rgba(225,93,99,0.4); color: var(--red); }
+.btn-danger:hover{ background: var(--red-bg); }
+.btn-ghost{ background:transparent; border-color:transparent; }
+.btn-ghost:hover{ background: var(--card-hover); }
+.btn-sm{ padding:6px 11px; font-size:12px; }
+.btn-block{ width:100%; justify-content:center; }
+
+.badge{ display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:600; padding:3px 9px; border-radius:20px; letter-spacing:.01em; border:1px solid transparent; }
+.badge::before{ content:''; width:6px; height:6px; border-radius:50%; background:currentColor; }
+.badge-teal{ color: var(--teal); background: var(--teal-bg); }
+.badge-amber{ color: var(--amber); background: var(--amber-bg); }
+.badge-red{ color: var(--red); background: var(--red-bg); }
+.badge-blue{ color: var(--blue); background: var(--blue-bg); }
+.badge-violet{ color: var(--violet); background: var(--violet-bg); }
+.badge-muted{ color: var(--text-faint); background: var(--bg-alt); }
+
+.table-wrap{ overflow-x:auto; border:1px solid var(--border); border-radius: var(--radius-md); }
+table{ width:100%; border-collapse:collapse; font-size:12.8px; min-width:640px; }
+thead th{ text-align:left; font-size:10.8px; text-transform:uppercase; letter-spacing:.05em; color:var(--text-faint); font-weight:600; padding:10px 14px; background: var(--bg-alt); border-bottom:1px solid var(--border); white-space:nowrap; }
+tbody td{ padding:11px 14px; border-bottom:1px solid var(--border-soft); vertical-align:middle; }
+tbody tr:last-child td{ border-bottom:none; }
+tbody tr:hover{ background: var(--card-hover); }
+td.mono, .cell-mono{ font-family: var(--font-mono); font-size:12px; color: var(--text-dim); }
+
+.toolbar{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.toolbar .spacer{ flex:1; }
+
+.form-row{ display:grid; grid-template-columns:repeat(auto-fit, minmax(160px,1fr)); gap:14px; }
+
+.pager{ display:flex; align-items:center; justify-content:flex-end; gap:10px; padding:12px 4px 0; font-size:12px; color:var(--text-faint); }
+.pager .pager-btns{ display:flex; gap:6px; }
+
+.empty-state, .error-state{ display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:44px 20px; gap:10px; color:var(--text-faint); }
+.empty-state svg, .error-state svg{ width:34px; height:34px; opacity:.5; margin-bottom:4px; }
+.empty-state .es-title, .error-state .es-title{ font-size:13px; font-weight:600; color:var(--text-dim); }
+.empty-state .es-sub, .error-state .es-sub{ font-size:12px; max-width:340px; }
+.error-state svg{ color: var(--red); }
+
+.spinner{ width:16px; height:16px; border-radius:50%; border:2px solid var(--border); border-top-color: var(--teal); animation: spin .7s linear infinite; }
+@keyframes spin{ to{ transform: rotate(360deg); } }
+.loading-row{ display:flex; align-items:center; justify-content:center; gap:10px; padding:36px; color: var(--text-faint); font-size:12.5px; }
+
+.skeleton-bar{ height:12px; border-radius:4px; background: linear-gradient(90deg, var(--bg-alt) 25%, var(--border-soft) 37%, var(--bg-alt) 63%); background-size:400% 100%; animation: shimmer 1.4s ease infinite; }
+@keyframes shimmer{ 0%{background-position:100% 0;} 100%{background-position:0 0;} }
+
+.progress-track{ width:100%; height:7px; border-radius:20px; background: var(--bg-alt); overflow:hidden; border:1px solid var(--border-soft); }
+.progress-fill{ height:100%; background: var(--teal); border-radius:20px; transition: width .3s ease; }
+.progress-fill.red{ background: var(--red); }
+.progress-fill.amber{ background: var(--amber); }
+
+.mask-toggle{ display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-dim); }
+.switch{ position:relative; width:34px; height:19px; flex:none; }
+.switch input{ opacity:0; width:0; height:0; }
+.switch .slider{ position:absolute; inset:0; background: var(--border); border-radius:20px; cursor:pointer; transition:.15s; }
+.switch .slider::before{ content:''; position:absolute; width:14px; height:14px; left:2.5px; top:2.5px; background:#fff; border-radius:50%; transition:.15s; }
+.switch input:checked + .slider{ background: var(--teal); }
+.switch input:checked + .slider::before{ transform: translateX(15px); }
+
+.banner{ display:flex; align-items:center; gap:12px; padding:13px 16px; border-radius: var(--radius-md); border:1px solid; font-size:12.8px; }
+.banner-teal{ background: var(--teal-bg); border-color: rgba(52,214,190,0.3); color: var(--teal); }
+.banner-amber{ background: var(--amber-bg); border-color: rgba(231,168,61,0.3); color: var(--amber); }
+.banner-red{ background: var(--red-bg); border-color: rgba(225,93,99,0.3); color: var(--red); }
+.banner svg{ width:18px; height:18px; flex:none; }
+.banner strong{ color: var(--text); }
+
+/* Security flow diagram */
+.flow-row{ display:flex; align-items:center; gap:6px; overflow-x:auto; padding:6px 2px 12px; }
+.flow-node{ flex:none; min-width:118px; text-align:center; padding:12px 10px; border-radius: var(--radius-md); border:1px solid var(--border); background: var(--bg-alt); font-size:11.6px; font-weight:600; }
+.flow-node .fn-tag{ display:block; font-size:9.5px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color:var(--text-faint); margin-top:4px; }
+.flow-arrow{ flex:none; color: var(--text-faint); width:20px; height:14px; }
+.flow-node.zone-plain{ border-color: rgba(225,93,99,0.35); background: var(--red-bg); }
+.flow-node.zone-protected{ border-color: rgba(52,214,190,0.35); background: var(--teal-bg); }
+.flow-node.zone-vault{ border-color: rgba(156,123,239,0.35); background: var(--violet-bg); }
+.flow-node.zone-gateway{ border-color: rgba(76,143,238,0.35); background: var(--blue-bg); }
+
+.zone-legend{ display:flex; flex-wrap:wrap; gap:14px; font-size:11.5px; color:var(--text-dim); }
+.zone-legend .lg-item{ display:flex; align-items:center; gap:6px; }
+.lg-swatch{ width:11px; height:11px; border-radius:3px; }
+
+/* Architecture diagram (dedicated) */
+.arch-wrap{ display:flex; flex-direction:column; align-items:center; gap:0; }
+.arch-col{ display:flex; flex-direction:column; align-items:center; gap:4px; }
+.arch-down{ color: var(--text-faint); font-size:16px; line-height:1; margin: 2px 0; }
+.arch-split{ display:flex; align-items:flex-start; justify-content:center; gap:60px; width:100%; margin-top:4px; position:relative; }
+.arch-node{ min-width:170px; text-align:center; padding:13px 14px; border-radius: var(--radius-md); border:1px solid var(--border); background:var(--bg-alt); font-size:12.5px; font-weight:600; }
+.arch-node .an-sub{ display:block; font-size:10px; font-weight:500; color:var(--text-faint); margin-top:3px; text-transform:none; }
+
+/* Marketing workflow (vertical) */
+.wf-vert{ display:flex; flex-direction:column; align-items:center; gap:4px; }
+.wf-node{ width:100%; max-width:320px; text-align:center; padding:11px 14px; border-radius: var(--radius-md); border:1px solid var(--border); background: var(--bg-alt); font-size:12.5px; font-weight:600; transition: all .2s ease; }
+.wf-node.active{ border-color: var(--teal); background: var(--teal-bg); color: var(--teal); box-shadow:0 0 0 3px var(--teal-bg); }
+.wf-down{ color:var(--text-faint); font-size:15px; }
+
+/* Reveal result panels */
+.reveal-result{ border-radius: var(--radius-md); padding:16px 18px; border:1px solid; margin-top:6px; }
+.reveal-result.granted{ background: var(--teal-bg); border-color: rgba(52,214,190,.35); }
+.reveal-result.denied{ background: var(--red-bg); border-color: rgba(225,93,99,.35); }
+.reveal-result .rr-title{ font-size:14px; font-weight:700; display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+.reveal-result.granted .rr-title{ color: var(--teal); }
+.reveal-result.denied .rr-title{ color: var(--red); }
+.reveal-result dl{ display:grid; grid-template-columns: 120px 1fr; gap:6px 12px; font-size:12.5px; margin:0; }
+.reveal-result dt{ color: var(--text-faint); }
+.reveal-result dd{ margin:0; font-family: var(--font-mono); }
+
+/* Policy field cards */
+.policy-field{ border:1px solid var(--border); border-radius: var(--radius-md); padding:16px 18px; background: var(--bg-alt); }
+.policy-field .pf-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+.policy-field .pf-name{ font-size:13.5px; font-weight:700; }
+.policy-field .pf-category{ font-size:10.5px; color: var(--text-faint); text-transform:uppercase; letter-spacing:.04em; }
+.token-visual{ display:flex; align-items:center; gap:10px; font-family:var(--font-mono); font-size:12px; margin-top:10px; padding:10px 12px; background: var(--bg); border:1px dashed var(--border); border-radius: var(--radius-sm); flex-wrap:wrap; }
+.token-visual .tv-arrow{ color: var(--text-faint); }
+.token-visual .tv-orig{ color: var(--red); }
+.token-visual .tv-new{ color: var(--teal); }
+.fpe-visual{ display:flex; align-items:center; gap:16px; margin-top:10px; flex-wrap:wrap; }
+.fpe-box{ padding:8px 12px; border-radius: var(--radius-sm); background: var(--bg); border:1px solid var(--border); font-family: var(--font-mono); font-size:12px; }
+.fpe-label{ font-size:10.5px; color:var(--text-faint); margin-bottom:4px; text-transform:uppercase; letter-spacing:.03em; }
+
+/* Modal */
+.modal-overlay{ position:fixed; inset:0; background:rgba(4,7,12,0.6); backdrop-filter: blur(2px); display:flex; align-items:center; justify-content:center; z-index:100; padding:20px; }
+.modal{ width:100%; max-width:560px; background: var(--panel); border:1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-2); max-height:88vh; display:flex; flex-direction:column; }
+.modal-head{ display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid var(--border-soft); }
+.modal-head h3{ font-size:14.5px; }
+.modal-body{ padding:18px 20px; overflow-y:auto; }
+.modal-foot{ padding:14px 20px; border-top:1px solid var(--border-soft); display:flex; justify-content:flex-end; gap:8px; }
+
+/* Toasts */
+#toastContainer{ position:fixed; bottom:20px; right:20px; display:flex; flex-direction:column; gap:10px; z-index:200; max-width:340px; }
+.toast{ background: var(--panel); border:1px solid var(--border); border-left:3px solid var(--teal); border-radius: var(--radius-sm); padding:12px 14px; box-shadow: var(--shadow-2); font-size:12.8px; display:flex; gap:10px; align-items:flex-start; animation: toastIn .18s ease; }
+.toast.error{ border-left-color: var(--red); }
+.toast.warn{ border-left-color: var(--amber); }
+@keyframes toastIn{ from{ opacity:0; transform: translateY(6px);} to{ opacity:1; transform:none; } }
+.toast .t-body{ flex:1; }
+.toast .t-title{ font-weight:600; margin-bottom:2px; }
+.toast .t-msg{ color: var(--text-dim); }
+.toast .t-close{ background:none; border:none; color:var(--text-faint); cursor:pointer; padding:0; }
+
+/* Tabs */
+.tabs{ display:flex; gap:4px; border-bottom:1px solid var(--border); margin-bottom:16px; }
+.tab-btn{ padding:9px 14px; font-size:12.8px; font-weight:600; color:var(--text-faint); background:none; border:none; border-bottom:2px solid transparent; cursor:pointer; margin-bottom:-1px; }
+.tab-btn:hover{ color: var(--text); }
+.tab-btn.active{ color: var(--teal); border-bottom-color: var(--teal); }
+.tab-panel{ display:none; }
+.tab-panel.active{ display:block; }
+
+/* Responsive */
+@media (max-width: 980px){
+  #sidebar{ transform: translateX(-100%); box-shadow: var(--shadow-2); }
+  #sidebar.open{ transform:none; }
+  .main-wrapper{ margin-left:0; }
+  .menu-toggle{ display:flex; }
+}
+</style>
+</head>
+<body data-theme="dark">
+
+<!-- ============================================================
+     SVG ICON SPRITE
+     ============================================================ -->
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <symbol id="icon-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"/><path d="M9 12l2 2 4-4"/></symbol>
+    <symbol id="icon-grid" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></symbol>
+    <symbol id="icon-db" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></symbol>
+    <symbol id="icon-scan" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8V5a1 1 0 0 1 1-1h3M20 8V5a1 1 0 0 0-1-1h-3M4 16v3a1 1 0 0 0 1 1h3M20 16v3a1 1 0 0 1-1 1h-3"/><circle cx="12" cy="12" r="3.4"/></symbol>
+    <symbol id="icon-policy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3h9l3 3v15H6z"/><path d="M9 9h6M9 13h6M9 17h3"/></symbol>
+    <symbol id="icon-activity" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12h4l2 7 4-14 2 7h6"/></symbol>
+    <symbol id="icon-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
+    <symbol id="icon-mail" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 6l9 7 9-7"/></symbol>
+    <symbol id="icon-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="icon-file" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4M9 12h6M9 16h6"/></symbol>
+    <symbol id="icon-power" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v9"/><path d="M6.3 6.3a8 8 0 1 0 11.4 0"/></symbol>
+    <symbol id="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+    <symbol id="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z"/></symbol>
+    <symbol id="icon-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></symbol>
+    <symbol id="icon-play" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 4l14 8-14 8V4z"/></symbol>
+    <symbol id="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 6L9 17l-5-5"/></symbol>
+    <symbol id="icon-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 6L6 18M6 6l12 12"/></symbol>
+    <symbol id="icon-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l10 18H2z"/><path d="M12 10v4M12 17h.01"/></symbol>
+    <symbol id="icon-wifi-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 2l20 20M8.5 16.5a5 5 0 0 1 7 0M5 13a10 10 0 0 1 3.5-2.5M19 13a10 10 0 0 0-3-2.2M12 20h.01M12.5 8.5A14 14 0 0 1 22 11"/></symbol>
+    <symbol id="icon-inbox" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 12h4l2 3h4l2-3h4"/><path d="M4 12l1.5-7h13L20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-6z"/></symbol>
+    <symbol id="icon-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></symbol>
+    <symbol id="icon-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M3 12h18M3 18h18"/></symbol>
+    <symbol id="icon-vault" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="12" cy="12" r="4"/><path d="M12 10v.01"/></symbol>
+    <symbol id="icon-key" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M17 6l3 3M14 9l2 2"/></symbol>
+  </defs>
+</svg>
+
+<!-- ============================================================
+     LOGIN SCREEN
+     ============================================================ -->
+<div id="loginScreen">
+  <div class="login-shell">
+    <div class="login-side">
+      <div>
+        <div class="brand-mark">
+          <svg class="glyph" viewBox="0 0 24 24" fill="none" stroke="#34D6BE" stroke-width="1.6"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg>
+          <span style="color:#fff">Veilix</span>
+        </div>
+        <p class="tagline" style="margin-top:10px;">A privacy-preserving pipeline for customer data &mdash; discovery, classification, protection and controlled access, end to end.</p>
+        <div class="flow-mini">
+          <div class="fm-step"><span class="fm-dot"></span>Source database</div>
+          <div class="fm-step"><span class="fm-dot"></span>Discovery &amp; classification</div>
+          <div class="fm-step"><span class="fm-dot"></span>Tokenization / FPE / masking</div>
+          <div class="fm-step"><span class="fm-dot"></span>Secure vault &amp; privacy gateway</div>
+          <div class="fm-step"><span class="fm-dot"></span>Controlled reveal &amp; audit log</div>
+        </div>
+      </div>
+      <p class="tagline">Frontend workspace &middot; connects to a local FastAPI service.</p>
+    </div>
+    <div class="login-main">
+      <h1>Sign in to Veilix</h1>
+      <p class="sub">Select a role to load the matching workspace view. This is a UI convenience only &mdash; every action is still authorized by the backend.</p>
+
+      <div class="field-group">
+        <label for="loginName">Display name</label>
+        <input id="loginName" type="text" placeholder="e.g. Aisha Rao" autocomplete="off" />
+      </div>
+
+      <label style="display:block;font-size:12px;color:var(--text-dim);margin-bottom:8px;">Role</label>
+      <div class="role-grid" id="roleGrid">
+        <button type="button" class="role-card" data-role="ADMIN">
+          <span class="r-title">Admin</span>
+          <span class="r-desc">Full access to pipeline, policies &amp; audit</span>
+        </button>
+        <button type="button" class="role-card" data-role="OPERATOR">
+          <span class="r-title">Faculty / Data Operator</span>
+          <span class="r-desc">Runs discovery, batches &amp; protection</span>
+        </button>
+        <button type="button" class="role-card" data-role="MARKETING">
+          <span class="r-title">Marketing</span>
+          <span class="r-desc">Sends campaigns via protected recipients only</span>
+        </button>
+        <button type="button" class="role-card" data-role="PRIVACY_OFFICER">
+          <span class="r-title">Privacy Officer</span>
+          <span class="r-desc">Handles reveal requests &amp; audit review</span>
+        </button>
+      </div>
+
+      <button class="btn btn-primary btn-block" id="loginSubmit" disabled>Enter platform</button>
+
+      <div class="login-note">
+        Role selection only changes what this browser shows you. Every protect, reveal and email action is still checked and logged by the FastAPI backend &mdash; the frontend never grants access on its own.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     APP SHELL
+     ============================================================ -->
+<div id="app" class="hidden">
+
+  <aside id="sidebar">
+    <div class="sidebar-top">
+      <div class="brand-mark">
+        <svg class="glyph" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#34D6BE" stroke-width="1.6"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg>
+        <span>Veilix</span>
+      </div>
+      <div class="brand-sub">Privacy-Preserving Data Platform</div>
+    </div>
+
+    <ul id="navList">
+      <li class="nav-item" data-page="dashboard"><svg><use href="#icon-grid"/></svg>Dashboard</li>
+      <li class="nav-item" data-page="source"><svg><use href="#icon-db"/></svg>Source &amp; Batch</li>
+      <li class="nav-item" data-page="discovery"><svg><use href="#icon-scan"/></svg>PII Discovery</li>
+      <li class="nav-item" data-page="policy"><svg><use href="#icon-policy"/></svg>Protection Policy</li>
+      <li class="nav-item" data-page="batch"><svg><use href="#icon-activity"/></svg>Batch Monitor</li>
+      <li class="nav-item" data-page="protected"><svg><use href="#icon-lock"/></svg>Protected Customers</li>
+      <li class="nav-item" data-page="marketing"><svg><use href="#icon-mail"/></svg>Marketing Demo</li>
+      <li class="nav-item" data-page="reveal"><svg><use href="#icon-eye"/></svg>Controlled Reveal</li>
+      <li class="nav-item" data-page="audit"><svg><use href="#icon-file"/></svg>Audit Dashboard</li>
+    </ul>
+
+    <div class="sidebar-bottom">
+      <div class="status-chip">
+        <span class="status-dot offline" id="backendDot"></span>
+        <span id="backendLabel">Checking backend&hellip;</span>
+      </div>
+      <div class="user-box">
+        <div class="u-meta">
+          <div class="u-name" id="sbUserName">&mdash;</div>
+          <div class="u-role" id="sbUserRole">&mdash;</div>
+        </div>
+        <div style="display:flex; gap:6px;">
+          <button class="icon-btn" id="themeToggle" title="Toggle theme"><svg><use href="#icon-moon"/></svg></button>
+          <button class="icon-btn" id="logoutBtn" title="Log out"><svg><use href="#icon-power"/></svg></button>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main-wrapper">
+    <header id="topbar">
+      <div class="tb-left">
+        <button class="icon-btn menu-toggle" id="menuToggle"><svg><use href="#icon-menu"/></svg></button>
+        <div>
+          <div class="tb-title" id="pageTitle">Dashboard</div>
+          <div class="tb-crumb" id="pageCrumb">Overview of the protection pipeline</div>
+        </div>
+      </div>
+      <div class="tb-right">
+        <span class="badge-role" id="topRoleBadge">ADMIN</span>
+      </div>
+    </header>
+
+    <main id="content">
+
+      <!-- ============================= DASHBOARD ============================= -->
+      <section class="page" id="page-dashboard">
+        <div class="grid grid-metrics" id="metricsGrid"></div>
+
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <h3>Protection pipeline flow</h3>
+              <div class="card-desc">How a customer record moves from raw source data to a fully audited, protected state.</div>
+            </div>
+          </div>
+          <div class="flow-row" id="flowRow"></div>
+          <div class="zone-legend" style="margin-top:6px;">
+            <span class="lg-item"><span class="lg-swatch" style="background:var(--red)"></span>Plaintext zone</span>
+            <span class="lg-item"><span class="lg-swatch" style="background:var(--teal)"></span>Protected zone</span>
+            <span class="lg-item"><span class="lg-swatch" style="background:var(--violet)"></span>Restricted vault</span>
+            <span class="lg-item"><span class="lg-swatch" style="background:var(--blue)"></span>Controlled access</span>
+          </div>
+        </div>
+
+        <div class="grid grid-2">
+          <div class="card">
+            <div class="card-head"><h3>Zone status</h3></div>
+            <div style="display:flex; flex-direction:column; gap:10px;" id="zoneStatusList"></div>
+          </div>
+          <div class="card">
+            <div class="card-head">
+              <div><h3>Security architecture</h3><div class="card-desc">Full topology from source to audit log.</div></div>
+            </div>
+            <div class="arch-wrap" id="archDiagram"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================= SOURCE & BATCH ============================= -->
+      <section class="page hidden" id="page-source">
+        <div class="grid grid-3">
+          <div class="card"><div class="card-desc">Source</div><h3 class="mono">MongoDB</h3></div>
+          <div class="card"><div class="card-desc">Database</div><h3 class="mono">flyyy_privacy_platform</h3></div>
+          <div class="card"><div class="card-desc">Collection</div><h3 class="mono">source_customers</h3></div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <div><h3>Batch configuration</h3><div class="card-desc">Set up parameters before pulling source records or launching a protection batch.</div></div>
+          </div>
+          <div class="form-row">
+            <div class="field-group" style="margin-bottom:0;">
+              <label for="cfgSourceName">Source name</label>
+              <input id="cfgSourceName" type="text" value="source_customers" />
+            </div>
+            <div class="field-group" style="margin-bottom:0;">
+              <label for="cfgBatchSize">Batch size</label>
+              <input id="cfgBatchSize" type="number" min="1" value="50" />
+            </div>
+            <div class="field-group" style="margin-bottom:0;">
+              <label for="cfgMode">Processing mode</label>
+              <select id="cfgMode">
+                <option value="standard">Standard</option>
+                <option value="fast">Fast</option>
+                <option value="strict">Strict validation</option>
+              </select>
+            </div>
+          </div>
+          <div class="toolbar" style="margin-top:16px;">
+            <button class="btn btn-primary" id="btnLoadSource"><svg><use href="#icon-db"/></svg>Load source data</button>
+            <button class="btn" id="btnStartBatch"><svg><use href="#icon-play"/></svg>Start batch</button>
+            <button class="btn btn-ghost" id="btnRefreshSource"><svg><use href="#icon-refresh"/></svg>Refresh</button>
+          </div>
+        </div>
+
+        <div class="card hidden" id="latestBatchCard">
+          <div class="card-head"><h3>Latest batch</h3></div>
+          <div class="grid grid-3" id="latestBatchGrid"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <div><h3>Source customers</h3><div class="card-desc">Raw pre-protection records. Sensitive columns are masked by default.</div></div>
+            <div class="mask-toggle">
+              <label class="switch"><input type="checkbox" id="sourceMaskToggle" /><span class="slider"></span></label>
+              <span id="sourceMaskLabel">Show sensitive columns</span>
+            </div>
+          </div>
+          <div id="sourceTableWrap"><div class="loading-row"><span class="spinner"></span>Waiting for source data&hellip;</div></div>
+          <div class="pager hidden" id="sourcePager"></div>
+        </div>
+      </section>
+
+      <!-- ============================= PII DISCOVERY ============================= -->
+      <section class="page hidden" id="page-discovery">
+        <div class="card">
+          <div class="card-head">
+            <div><h3>Sensitive data discovery</h3><div class="card-desc">Scan source fields to detect PII and classify each into a protection category.</div></div>
+            <div class="card-actions">
+              <button class="btn btn-primary" id="btnRunDiscovery"><svg><use href="#icon-scan"/></svg>Run PII discovery</button>
+            </div>
+          </div>
+          <div class="grid grid-metrics" id="discoverySummary" style="grid-template-columns:repeat(4,1fr);"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h3>Field classification results</h3></div>
+          <div id="discoveryTableWrap">
+            <div class="empty-state">
+              <svg><use href="#icon-scan"/></svg>
+              <div class="es-title">No discovery run yet</div>
+              <div class="es-sub">Run PII discovery to classify fields such as name, email and mobile against the source dataset.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================= PROTECTION POLICY ============================= -->
+      <section class="page hidden" id="page-policy">
+        <div class="card">
+          <div class="card-head">
+            <div><h3>Protection policy</h3><div class="card-desc">Choose how each sensitive field is protected before it enters the protected database.</div></div>
+            <div class="card-actions">
+              <button class="btn btn-ghost" id="btnResetPolicy"><svg><use href="#icon-refresh"/></svg>Reset</button>
+              <button class="btn btn-primary" id="btnSavePolicy"><svg><use href="#icon-check"/></svg>Save policy</button>
+            </div>
+          </div>
+          <div id="policyFieldsWrap" style="display:flex; flex-direction:column; gap:14px;">
+            <div class="loading-row"><span class="spinner"></span>Loading policy configuration&hellip;</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================= BATCH MONITOR ============================= -->
+      <section class="page hidden" id="page-batch">
+        <div class="card">
+          <div class="card-head">
+            <div><h3>Batch monitor</h3><div class="card-desc">Track every protection batch from queued to completed.</div></div>
+            <div class="card-actions">
+              <button class="btn btn-ghost" id="btnRefreshBatches"><svg><use href="#icon-refresh"/></svg>Refresh</button>
+            </div>
+          </div>
+          <div id="batchTableWrap"><div class="loading-row"><span class="spinner"></span>Loading batches&hellip;</div></div>
+        </div>
+      </section>
+
+      <!-- ============================= PROTECTED CUSTOMERS ============================= -->
+      <section class="page hidden" id="page-protected">
+        <div class="banner banner-teal">
+          <svg><use href="#icon-lock"/></svg>
+          <div><strong>Sensitive customer data is protected by default.</strong> Names, emails and mobile numbers are shown only as tokens or format-preserving values.</div>
+        </div>
+
+        <div class="grid grid-3">
+          <div class="card"><div class="card-desc">Storage</div><h3>Protected DB</h3></div>
+          <div class="card"><div class="card-desc">Backing vault</div><h3>Secure vault</h3></div>
+          <div class="card"><div class="card-desc">Access level</div><h3 style="color:var(--red)">Restricted</h3></div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <div><h3>Protected customer records</h3><div class="card-desc">Tokenized and format-preserving encrypted values as stored downstream.</div></div>
+            <div class="toolbar">
+              <input type="text" id="protectedSearchInput" placeholder="Look up by customer ID" style="background:var(--bg-alt); border:1px solid var(--border); color:var(--text); border-radius:var(--radius-sm); padding:8px 11px; font-size:12.8px;" />
+              <button class="btn btn-sm" id="btnProtectedSearch"><svg><use href="#icon-search"/></svg>Look up</button>
+              <button class="btn btn-ghost btn-sm" id="btnRefreshProtected"><svg><use href="#icon-refresh"/></svg>Refresh</button>
+            </div>
+          </div>
+          <div id="protectedTableWrap"><div class="loading-row"><span class="spinner"></span>Loading protected records&hellip;</div></div>
+          <div class="pager hidden" id="protectedPager"></div>
+        </div>
+      </section>
+
+      <!-- ============================= MARKETING DEMO ============================= -->
+      <section class="page hidden" id="page-marketing">
+        <div class="banner banner-amber">
+          <svg><use href="#icon-alert"/></svg>
+          <div>This simulates a downstream marketing tool. It only ever receives a <strong>protected recipient token</strong> &mdash; never a real email address.</div>
+        </div>
+
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="send">Send email</button>
+          <button class="tab-btn" data-tab="bounce">Bounce handling</button>
+        </div>
+
+        <div class="tab-panel active" id="tab-send">
+          <div class="grid grid-2">
+            <div class="card">
+              <div class="card-head"><h3>Compose campaign message</h3></div>
+              <div class="field-group">
+                <label for="mktCustomer">Customer (protected recipient)</label>
+                <select id="mktCustomer"><option value="">Loading protected customers&hellip;</option></select>
+                <div class="field-hint">Only the protected recipient token is sent to the gateway &mdash; the real address is resolved server-side.</div>
+              </div>
+              <div class="field-group">
+                <label for="mktPurpose">Purpose</label>
+                <select id="mktPurpose">
+                  <option>Promotional Campaign</option>
+                  <option>Product Update</option>
+                  <option>Transactional Notice</option>
+                  <option>Customer Survey</option>
+                </select>
+              </div>
+              <div class="field-group">
+                <label for="mktSubject">Subject</label>
+                <input id="mktSubject" type="text" placeholder="e.g. Your September benefits are ready" />
+              </div>
+              <div class="field-group">
+                <label for="mktMessage">Message</label>
+                <textarea id="mktMessage" rows="4" placeholder="Write the campaign message&hellip;"></textarea>
+              </div>
+              <button class="btn btn-primary btn-block" id="btnSendEmail"><svg><use href="#icon-mail"/></svg>Send email</button>
+              <div id="mktResult" style="margin-top:12px;"></div>
+            </div>
+
+            <div class="card">
+              <div class="card-head"><h3>Delivery workflow</h3></div>
+              <div class="wf-vert" id="mktWorkflow">
+                <div class="wf-node" data-step="app">Marketing app</div>
+                <div class="wf-down">&darr;</div>
+                <div class="wf-node" data-step="token">Protected recipient token</div>
+                <div class="wf-down">&darr;</div>
+                <div class="wf-node" data-step="gateway">Privacy gateway</div>
+                <div class="wf-down">&darr;</div>
+                <div class="wf-node" data-step="vault">Secure vault</div>
+                <div class="wf-down">&darr;</div>
+                <div class="wf-node" data-step="provider">Real email provider</div>
+                <div class="wf-down">&darr;</div>
+                <div class="wf-node" data-step="status">Delivery status</div>
+                <div class="wf-down">&darr;</div>
+                <div class="wf-node" data-step="audit">Audit log</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-panel" id="tab-bounce">
+          <div class="card">
+            <div class="card-head">
+              <div><h3>Bounce &amp; delivery events</h3><div class="card-desc">Provider callbacks are reverse-resolved by the gateway; marketing only ever sees the protected recipient.</div></div>
+              <div class="card-actions">
+                <button class="btn btn-ghost btn-sm" id="btnRefreshBounces"><svg><use href="#icon-refresh"/></svg>Refresh</button>
+                <button class="btn btn-sm" id="btnSimulateBounce"><svg><use href="#icon-play"/></svg>Simulate provider callback</button>
+              </div>
+            </div>
+            <div id="bounceTableWrap"><div class="loading-row"><span class="spinner"></span>Loading bounce events&hellip;</div></div>
+          </div>
+          <div class="card">
+            <div class="card-head"><h3>Reverse-resolution flow</h3></div>
+            <div class="flow-row">
+              <div class="flow-node zone-gateway">Provider callback<span class="fn-tag">Webhook</span></div>
+              <svg class="flow-arrow" viewBox="0 0 20 14"><path d="M0 7h16M11 2l5 5-5 5" stroke="currentColor" fill="none" stroke-width="1.8"/></svg>
+              <div class="flow-node zone-vault">Gateway resolves email<span class="fn-tag">Vault lookup</span></div>
+              <svg class="flow-arrow" viewBox="0 0 20 14"><path d="M0 7h16M11 2l5 5-5 5" stroke="currentColor" fill="none" stroke-width="1.8"/></svg>
+              <div class="flow-node zone-protected">Recipient stored as token<span class="fn-tag">No plaintext</span></div>
+              <svg class="flow-arrow" viewBox="0 0 20 14"><path d="M0 7h16M11 2l5 5-5 5" stroke="currentColor" fill="none" stroke-width="1.8"/></svg>
+              <div class="flow-node">Audit event created<span class="fn-tag">Logged</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================= CONTROLLED REVEAL ============================= -->
+      <section class="page hidden" id="page-reveal">
+        <div class="grid grid-2">
+          <div class="card">
+            <div class="card-head"><h3>Request a controlled reveal</h3><div class="card-desc">The backend alone decides whether to authorize this request.</div></div>
+            <div class="field-group">
+              <label for="revSubject">Subject ID (customer ID)</label>
+              <input id="revSubject" type="text" placeholder="e.g. CUST-0001" />
+            </div>
+            <div class="field-group">
+              <label for="revField">Field</label>
+              <select id="revField">
+                <option value="email">Email</option>
+                <option value="mobile">Mobile</option>
+                <option value="name">Name</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label for="revPurpose">Purpose</label>
+              <select id="revPurpose">
+                <option>Customer Support</option>
+                <option>Fraud Investigation</option>
+                <option>Legal Request</option>
+                <option>Marketing Optimization</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label for="revReference">Reference (ticket ID)</label>
+              <input id="revReference" type="text" placeholder="e.g. TCK-48213" />
+            </div>
+            <button class="btn btn-primary btn-block" id="btnRequestReveal"><svg><use href="#icon-eye"/></svg>Request reveal</button>
+          </div>
+
+          <div class="card">
+            <div class="card-head"><h3>Authorization outcome</h3></div>
+            <div id="revealResultWrap">
+              <div class="empty-state">
+                <svg><use href="#icon-eye"/></svg>
+                <div class="es-title">No request submitted yet</div>
+                <div class="es-sub">Submit a reveal request to see the backend's authorization decision here.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================= AUDIT DASHBOARD ============================= -->
+      <section class="page hidden" id="page-audit">
+        <div class="grid grid-metrics" id="auditMetricsGrid"></div>
+
+        <div class="card">
+          <div class="card-head">
+            <div><h3>Audit log</h3><div class="card-desc">Every batch, protection, email, bounce and reveal event. Plaintext values are never stored here.</div></div>
+          </div>
+          <div class="form-row" style="margin-bottom:14px;">
+            <div class="field-group" style="margin-bottom:0;">
+              <label for="afType">Event type</label>
+              <select id="afType">
+                <option value="">All types</option>
+                <option value="batch">Batch</option>
+                <option value="protection">Protection</option>
+                <option value="email">Email</option>
+                <option value="bounce">Bounce</option>
+                <option value="reveal">Reveal</option>
+              </select>
+            </div>
+            <div class="field-group" style="margin-bottom:0;">
+              <label for="afStatus">Status</label>
+              <select id="afStatus">
+                <option value="">All statuses</option>
+                <option value="SUCCESS">Success</option>
+                <option value="DENIED">Denied</option>
+                <option value="FAILED">Failed</option>
+              </select>
+            </div>
+            <div class="field-group" style="margin-bottom:0;">
+              <label for="afActor">Actor</label>
+              <input id="afActor" type="text" placeholder="e.g. marketing_user" />
+            </div>
+            <div class="field-group" style="margin-bottom:0;">
+              <label for="afDate">Date</label>
+              <input id="afDate" type="date" />
+            </div>
+            <div class="field-group" style="margin-bottom:0;">
+              <label for="afPurpose">Purpose</label>
+              <input id="afPurpose" type="text" placeholder="e.g. Customer Support" />
+            </div>
+          </div>
+          <div class="toolbar" style="margin-bottom:14px;">
+            <button class="btn btn-primary btn-sm" id="btnApplyAuditFilters"><svg><use href="#icon-search"/></svg>Apply filters</button>
+            <button class="btn btn-ghost btn-sm" id="btnResetAuditFilters">Reset</button>
+            <span class="spacer"></span>
+            <button class="btn btn-ghost btn-sm" id="btnRefreshAudit"><svg><use href="#icon-refresh"/></svg>Refresh</button>
+          </div>
+          <div id="auditTableWrap"><div class="loading-row"><span class="spinner"></span>Loading audit log&hellip;</div></div>
+          <div class="pager hidden" id="auditPager"></div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<div id="toastContainer"></div>
+<div id="modalRoot"></div>
+
+<script>
+'use strict';
+/* ==========================================================================
+   0. CONFIG
+   ========================================================================== */
+const API_BASE_URL = "http://127.0.0.1:8000";
+
+// Adjust these paths to match the real FastAPI routes if they differ.
+const ENDPOINTS = {
+  health:              "/health",
+  dashboardMetrics:    "/dashboard/metrics",
+  sourceCustomers:     "/customers/source",
+  batchRun:            "/batch/run",
+  batchGet:      (id) => `/batch/${encodeURIComponent(id)}`,
+  batchList:           "/batch",
+  discover:            "/discover",
+  policies:            "/policies",
+  protect:             "/protect",
+  protectedCustomers:  "/customers/protected",
+  customerById:  (id) => `/customers/${encodeURIComponent(id)}`,
+  sendEmail:           "/actions/send-email",
+  bounceWebhook:       "/webhooks/email",
+  bounceList:          "/bounces",
+  reveal:              "/reveal",
+  audit:               "/audit",
+};
+
+const ROLE_PAGES = {
+  ADMIN:            ["dashboard","source","discovery","policy","batch","protected","marketing","reveal","audit"],
+  OPERATOR:         ["dashboard","source","discovery","policy","batch","protected","audit"],
+  MARKETING:        ["dashboard","marketing","protected"],
+  PRIVACY_OFFICER:  ["dashboard","reveal","audit","protected"],
+};
+const ROLE_LABELS = {
+  ADMIN: "Admin",
+  OPERATOR: "Faculty / Data Operator",
+  MARKETING: "Marketing",
+  PRIVACY_OFFICER: "Privacy Officer",
+};
+
+const PAGE_META = {
+  dashboard:  { title: "Dashboard", crumb: "Overview of the protection pipeline" },
+  source:     { title: "Source & Batch", crumb: "Source database and batch execution" },
+  discovery:  { title: "PII Discovery", crumb: "Sensitive field detection & classification" },
+  policy:     { title: "Protection Policy", crumb: "Configure how each field is protected" },
+  batch:      { title: "Batch Monitor", crumb: "Track protection batches end to end" },
+  protected:  { title: "Protected Customers", crumb: "Privacy-by-design customer view" },
+  marketing:  { title: "Marketing Demo", crumb: "Downstream app using protected recipients" },
+  reveal:     { title: "Controlled Reveal", crumb: "Backend-authorized access to sensitive fields" },
+  audit:      { title: "Audit Dashboard", crumb: "Full event trail across the platform" },
+};
+
+/* ==========================================================================
+   1. STATE
+   ========================================================================== */
+const state = {
+  role: null,
+  userName: null,
+  backendOnline: null, // null = unknown, true/false once checked
+  currentPage: "dashboard",
+  theme: "dark",
+  source: { page: 1, pageSize: 10, total: 0, masked: true, rows: [] },
+  protected: { page: 1, pageSize: 10, total: 0, rows: [] },
+  audit: { page: 1, pageSize: 10, total: 0, filters: {} },
+  policy: { fields: null, dirty: false },
+  lastBatchId: null,
+};
+
+/* ==========================================================================
+   2. DOM UTILITIES
+   ========================================================================== */
+const $  = (sel, root=document) => root.querySelector(sel);
+const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+
+function el(tag, attrs = {}, children = []){
+  const node = document.createElement(tag);
+  for(const [k,v] of Object.entries(attrs)){
+    if(k === 'class') node.className = v;
+    else if(k === 'html') node.innerHTML = v;
+    else if(k.startsWith('on') && typeof v === 'function') node.addEventListener(k.slice(2), v);
+    else node.setAttribute(k, v);
+  }
+  (Array.isArray(children) ? children : [children]).forEach(c=>{
+    if(c === null || c === undefined) return;
+    node.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
+  });
+  return node;
+}
+
+function escapeHtml(str){
+  if(str === null || str === undefined) return '';
+  return String(str)
+    .replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;')
+    .replaceAll('"','&quot;').replaceAll("'",'&#39;');
+}
+
+function fmtDate(v){
+  if(!v) return '&mdash;';
+  const d = new Date(v);
+  if(isNaN(d.getTime())) return escapeHtml(v);
+  return d.toLocaleString(undefined, { dateStyle:'medium', timeStyle:'short' });
+}
+
+function badge(text, tone='muted'){
+  return `<span class="badge badge-${tone}">${escapeHtml(text)}</span>`;
+}
+function statusTone(status){
+  const s = (status||'').toString().toUpperCase();
+  if(['SUCCESS','COMPLETED','ACTIVE','GRANTED','ONLINE','PROTECTED'].includes(s)) return 'teal';
+  if(['DENIED','FAILED','ERROR','BOUNCE','OFFLINE'].includes(s)) return 'red';
+  if(['QUEUED','PENDING','RUNNING','PROCESSING'].includes(s)) return 'amber';
+  if(['SENSITIVE'].includes(s)) return 'red';
+  if(['RESTRICTED'].includes(s)) return 'violet';
+  return 'muted';
+}
+
+function loadingRow(msg='Loading&hellip;'){
+  return `<div class="loading-row"><span class="spinner"></span>${msg}</div>`;
+}
+function emptyState(title, sub, icon='inbox'){
+  return `<div class="empty-state"><svg><use href="#icon-${icon}"/></svg><div class="es-title">${escapeHtml(title)}</div><div class="es-sub">${escapeHtml(sub)}</div></div>`;
+}
+function errorState(title, sub, retryId){
+  return `<div class="error-state"><svg><use href="#icon-alert"/></svg><div class="es-title">${escapeHtml(title)}</div><div class="es-sub">${escapeHtml(sub)}</div>${retryId?`<button class="btn btn-sm" id="${retryId}" style="margin-top:6px;"><svg><use href="#icon-refresh"/></svg>Retry</button>`:''}</div>`;
+}
+function offlineState(retryId){
+  return `<div class="error-state"><svg><use href="#icon-wifi-off"/></svg><div class="es-title">Backend offline</div><div class="es-sub">Start the FastAPI server at ${escapeHtml(API_BASE_URL)} to load live data.</div>${retryId?`<button class="btn btn-sm" id="${retryId}" style="margin-top:6px;"><svg><use href="#icon-refresh"/></svg>Retry</button>`:''}</div>`;
+}
+
+/* Toasts */
+function showToast(title, msg='', type='info'){
+  const wrap = $('#toastContainer');
+  const t = el('div', { class:`toast ${type==='error'?'error':type==='warn'?'warn':''}` }, [
+    el('div', { class:'t-body' }, [
+      el('div', { class:'t-title' }, title),
+      msg ? el('div', { class:'t-msg' }, msg) : null,
+    ]),
+    el('button', { class:'t-close', onclick: ()=> t.remove() }, '✕'),
+  ]);
+  wrap.appendChild(t);
+  setTimeout(()=> t.remove(), 5000);
+}
+
+/* Modal */
+function openModal(title, bodyHtml, footHtml=''){
+  closeModal();
+  const overlay = el('div', { class:'modal-overlay', id:'activeModal', onclick:(e)=>{ if(e.target.id==='activeModal') closeModal(); } }, [
+    el('div', { class:'modal' }, [
+      el('div', { class:'modal-head' }, [
+        el('h3', {}, title),
+        el('button', { class:'icon-btn', onclick: closeModal }, [ (()=>{ const s=document.createElementNS('http://www.w3.org/2000/svg','svg'); s.innerHTML='<use href="#icon-x"/>'; return s; })() ]),
+      ]),
+      el('div', { class:'modal-body', html: bodyHtml }),
+      footHtml ? el('div', { class:'modal-foot', html: footHtml }) : null,
+    ]),
+  ]);
+  $('#modalRoot').appendChild(overlay);
+}
+function closeModal(){ const m = $('#activeModal'); if(m) m.remove(); }
+
+/* Pagination */
+function renderPager(container, {page, pageSize, total}, onChange){
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  container.classList.toggle('hidden', total <= pageSize);
+  container.innerHTML = '';
+  const info = el('span', {}, `Page ${page} of ${totalPages} &middot; ${total} records`.replace('&middot;','·'));
+  const btns = el('div', { class:'pager-btns' }, [
+    el('button', { class:'btn btn-sm', ...(page<=1?{disabled:'true'}:{}) , onclick: ()=> page>1 && onChange(page-1) }, 'Previous'),
+    el('button', { class:'btn btn-sm', ...(page>=totalPages?{disabled:'true'}:{}), onclick: ()=> page<totalPages && onChange(page+1) }, 'Next'),
+  ]);
+  container.appendChild(info);
+  container.appendChild(btns);
+}
+
+function normalizeList(data){
+  if(Array.isArray(data)) return { items: data, total: data.length };
+  if(data && Array.isArray(data.items)) return { items: data.items, total: data.total ?? data.items.length };
+  if(data && Array.isArray(data.results)) return { items: data.results, total: data.total ?? data.results.length };
+  if(data && Array.isArray(data.data)) return { items: data.data, total: data.total ?? data.data.length };
+  return { items: [], total: 0 };
+}
+
+/* ==========================================================================
+   3. API LAYER
+   ========================================================================== */
+class ApiError extends Error{
+  constructor(message, status=0, data=null){ super(message); this.status = status; this.data = data; }
+}
+
+async function apiRequest(path, { method='GET', body=null, params=null, timeoutMs=12000 } = {}){
+  let url;
+  try{
+    url = new URL(API_BASE_URL + path);
+  }catch(e){
+    throw new ApiError('Invalid API base URL configured.', 0);
+  }
+  if(params){
+    Object.entries(params).forEach(([k,v])=>{
+      if(v !== undefined && v !== null && v !== '') url.searchParams.set(k, v);
+    });
+  }
+
+  const controller = new AbortController();
+  const timer = setTimeout(()=> controller.abort(), timeoutMs);
+
+  try{
+    const res = await fetch(url.toString(), {
+      method,
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: body !== null ? JSON.stringify(body) : undefined,
+      signal: controller.signal,
+    });
+
+    let data = null;
+    const text = await res.text();
+    if(text){
+      try{ data = JSON.parse(text); } catch(e){ data = text; }
+    }
+
+    if(!res.ok){
+      const message = (data && typeof data === 'object' && (data.detail || data.message))
+        ? (data.detail || data.message)
+        : `Request failed with status ${res.status}`;
+      throw new ApiError(message, res.status, data);
+    }
+    state.backendOnline = true;
+    return data;
+  }catch(err){
+    if(err instanceof ApiError) throw err;
+    state.backendOnline = false;
+    if(err.name === 'AbortError'){
+      throw new ApiError('Request timed out while reaching the backend.', 0);
+    }
+    throw new ApiError('Unable to reach the backend. Confirm the FastAPI server is running.', 0);
+  }finally{
+    clearTimeout(timer);
+    updateBackendIndicator();
+  }
+}
+
+/* ---- endpoint-specific helpers ---- */
+const Api = {
+  health:            ()              => apiRequest(ENDPOINTS.health),
+  dashboardMetrics:  ()              => apiRequest(ENDPOINTS.dashboardMetrics),
+  sourceCustomers:   (page, pageSize)=> apiRequest(ENDPOINTS.sourceCustomers, { params:{ page, page_size: pageSize } }),
+  runBatch:          (payload)       => apiRequest(ENDPOINTS.batchRun, { method:'POST', body: payload }),
+  getBatch:          (id)            => apiRequest(ENDPOINTS.batchGet(id)),
+  listBatches:       ()              => apiRequest(ENDPOINTS.batchList),
+  runDiscovery:      ()              => apiRequest(ENDPOINTS.discover, { method:'POST', body:{} }),
+  getPolicies:       ()              => apiRequest(ENDPOINTS.policies),
+  savePolicies:      (payload)       => apiRequest(ENDPOINTS.policies, { method:'POST', body: payload }),
+  protectBatch:      (payload)       => apiRequest(ENDPOINTS.protect, { method:'POST', body: payload }),
+  protectedCustomers:(page, pageSize)=> apiRequest(ENDPOINTS.protectedCustomers, { params:{ page, page_size: pageSize } }),
+  getCustomer:       (id)            => apiRequest(ENDPOINTS.customerById(id)),
+  sendEmail:         (payload)       => apiRequest(ENDPOINTS.sendEmail, { method:'POST', body: payload }),
+  submitBounce:      (payload)       => apiRequest(ENDPOINTS.bounceWebhook, { method:'POST', body: payload }),
+  listBounces:       ()              => apiRequest(ENDPOINTS.bounceList),
+  requestReveal:     (payload)       => apiRequest(ENDPOINTS.reveal, { method:'POST', body: payload }),
+  getAudit:          (params)        => apiRequest(ENDPOINTS.audit, { params }),
+};
+
+/* ==========================================================================
+   4. BACKEND STATUS
+   ========================================================================== */
+function updateBackendIndicator(){
+  const dot = $('#backendDot');
+  const label = $('#backendLabel');
+  if(state.backendOnline === true){
+    dot.className = 'status-dot online';
+    label.textContent = 'Backend online';
+  }else if(state.backendOnline === false){
+    dot.className = 'status-dot offline';
+    label.textContent = 'Backend offline';
+  }else{
+    dot.className = 'status-dot';
+    label.textContent = 'Checking backend…';
+  }
+}
+
+async function checkBackendHealth(){
+  try{
+    await Api.health();
+    state.backendOnline = true;
+  }catch(e){
+    state.backendOnline = false;
+  }
+  updateBackendIndicator();
+  return state.backendOnline;
+}
+
+/* ==========================================================================
+   5. ROUTER / NAV
+   ========================================================================== */
+function applyRoleVisibility(){
+  const allowed = ROLE_PAGES[state.role] || ['dashboard'];
+  $$('.nav-item').forEach(item=>{
+    const page = item.dataset.page;
+    item.classList.toggle('hidden', !allowed.includes(page));
+  });
+  if(!allowed.includes(state.currentPage)){
+    navigateTo(allowed[0] || 'dashboard');
+  }
+}
+
+function navigateTo(page){
+  if(!PAGE_META[page]) return;
+  state.currentPage = page;
+  $$('.page').forEach(p=> p.classList.add('hidden'));
+  const target = $('#page-' + page);
+  if(target) target.classList.remove('hidden');
+
+  $$('.nav-item').forEach(item=> item.classList.toggle('active', item.dataset.page === page));
+  $('#pageTitle').textContent = PAGE_META[page].title;
+  $('#pageCrumb').textContent = PAGE_META[page].crumb;
+
+  $('#sidebar').classList.remove('open');
+
+  // lazy-load data for the page being entered
+  const loaders = {
+    dashboard: loadDashboard,
+    source: loadSourceCustomers,
+    discovery: renderDiscoveryEmptyIfNeeded,
+    policy: loadPolicies,
+    batch: loadBatches,
+    protected: loadProtectedCustomers,
+    marketing: loadMarketingCustomerOptions,
+    reveal: ()=>{},
+    audit: loadAudit,
+  };
+  if(loaders[page]) loaders[page]();
+}
+
+/* ==========================================================================
+   6. LOGIN
+   ========================================================================== */
+let selectedRole = null;
+
+function initLogin(){
+  $$('.role-card').forEach(card=>{
+    card.addEventListener('click', ()=>{
+      $$('.role-card').forEach(c=> c.classList.remove('selected'));
+      card.classList.add('selected');
+      selectedRole = card.dataset.role;
+      $('#loginSubmit').disabled = false;
+    });
+  });
+
+  $('#loginSubmit').addEventListener('click', ()=>{
+    if(!selectedRole) return;
+    const name = $('#loginName').value.trim() || 'Guest User';
+    state.role = selectedRole;
+    state.userName = name;
+    enterApp();
+  });
+
+  $('#loginName').addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter' && selectedRole) $('#loginSubmit').click();
+  });
+}
+
+function enterApp(){
+  $('#loginScreen').classList.add('hidden');
+  $('#app').classList.remove('hidden');
+  $('#sbUserName').textContent = state.userName;
+  $('#sbUserRole').textContent = ROLE_LABELS[state.role];
+  $('#topRoleBadge').textContent = ROLE_LABELS[state.role];
+  applyRoleVisibility();
+  navigateTo(ROLE_PAGES[state.role][0]);
+  checkBackendHealth();
+  setInterval(checkBackendHealth, 15000);
+}
+
+function logout(){
+  state.role = null;
+  state.userName = null;
+  $('#app').classList.add('hidden');
+  $('#loginScreen').classList.remove('hidden');
+  $$('.role-card').forEach(c=> c.classList.remove('selected'));
+  $('#loginSubmit').disabled = true;
+  selectedRole = null;
+}
+
+/* ==========================================================================
+   7. DASHBOARD
+   ========================================================================== */
+const DASHBOARD_METRICS = [
+  { key:'total_source_customers',  label:'Total source customers',    icon:'db',      tone:'blue' },
+  { key:'protected_customers',     label:'Protected customers',       icon:'lock',    tone:'teal' },
+  { key:'pii_fields_detected',     label:'PII fields detected',       icon:'scan',    tone:'amber' },
+  { key:'active_policies',         label:'Active protection policies',icon:'policy',  tone:'violet' },
+  { key:'successful_batches',      label:'Successful batches',        icon:'check',   tone:'teal' },
+  { key:'failed_batches',          label:'Failed batches',            icon:'x',       tone:'red' },
+  { key:'email_actions',           label:'Email actions',             icon:'mail',    tone:'blue' },
+  { key:'bounce_events',           label:'Bounce events',             icon:'alert',   tone:'amber' },
+  { key:'reveal_requests',         label:'Reveal requests',           icon:'eye',     tone:'violet' },
+  { key:'access_denied_events',    label:'Access denied events',      icon:'shield',  tone:'red' },
+];
+
+function renderMetricsGrid(container, defs, values, loadFailed){
+  container.innerHTML = '';
+  defs.forEach(def=>{
+    const raw = values ? values[def.key] : undefined;
+    const hasValue = raw !== undefined && raw !== null && !loadFailed;
+    const card = el('div', { class:'metric-card' }, [
+      el('div', { style:'display:flex; align-items:flex-start; justify-content:space-between;' }, [
+        el('div', { class:'m-label' }, def.label),
+        el('div', { class:`m-icon badge-${def.tone}`, style:`background:var(--${def.tone==='teal'?'teal-bg':def.tone==='red'?'red-bg':def.tone==='amber'?'amber-bg':def.tone==='blue'?'blue-bg':'violet-bg'}); color:var(--${def.tone});` }, [
+          (()=>{ const s=document.createElementNS('http://www.w3.org/2000/svg','svg'); s.innerHTML=`<use href="#icon-${def.icon}"/>`; return s; })()
+        ]),
+      ]),
+      el('div', { class:`m-value ${hasValue?'':'skeleton'}` }, hasValue ? String(raw) : (loadFailed ? '—' : '···')),
+    ]);
+    container.appendChild(card);
+  });
+}
+
+async function loadDashboard(){
+  const grid = $('#metricsGrid');
+  renderMetricsGrid(grid, DASHBOARD_METRICS, null, false);
+  renderFlowRow();
+  renderZoneStatus();
+  renderArchDiagram($('#archDiagram'));
+
+  try{
+    const data = await Api.dashboardMetrics();
+    renderMetricsGrid(grid, DASHBOARD_METRICS, data || {}, false);
+  }catch(err){
+    renderMetricsGrid(grid, DASHBOARD_METRICS, null, true);
+    if(err.status !== 0){ showToast('Could not load dashboard metrics', err.message, 'error'); }
+  }
+}
+
+function renderFlowRow(){
+  const steps = [
+    { label:'Source DB', tag:'Sensitive', zone:'plain' },
+    { label:'Discovery', tag:'Scanning', zone:'plain' },
+    { label:'Classification', tag:'PII mapped', zone:'plain' },
+    { label:'Protection', tag:'FPE / Token', zone:'protected' },
+    { label:'Protected DB', tag:'Protected', zone:'protected' },
+    { label:'Privacy Gateway', tag:'Active', zone:'gateway' },
+    { label:'Email', tag:'Token only', zone:'gateway' },
+    { label:'Audit', tag:'Logging', zone:'vault' },
+  ];
+  const row = $('#flowRow');
+  row.innerHTML = '';
+  steps.forEach((s, i)=>{
+    row.appendChild(el('div', { class:`flow-node zone-${s.zone}` }, [ s.label, el('span', { class:'fn-tag' }, s.tag) ]));
+    if(i < steps.length - 1){
+      const arrow = document.createElementNS('http://www.w3.org/2000/svg','svg');
+      arrow.setAttribute('class','flow-arrow'); arrow.setAttribute('viewBox','0 0 20 14');
+      arrow.innerHTML = '<path d="M0 7h16M11 2l5 5-5 5" stroke="currentColor" fill="none" stroke-width="1.8"/>';
+      row.appendChild(arrow);
+    }
+  });
+}
+
+function renderZoneStatus(){
+  const zones = [
+    { label:'Source data', value:'Sensitive', tone:'red' },
+    { label:'Protected data', value:'Protected', tone:'teal' },
+    { label:'Vault', value:'Restricted', tone:'violet' },
+    { label:'Gateway', value:'Active', tone:'blue' },
+    { label:'Audit', value:'Logging', tone:'muted' },
+  ];
+  const wrap = $('#zoneStatusList');
+  wrap.innerHTML = '';
+  zones.forEach(z=>{
+    wrap.appendChild(el('div', { style:'display:flex; align-items:center; justify-content:space-between; padding:9px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg-alt);' }, [
+      el('span', { style:'font-size:12.8px; font-weight:600;' }, z.label),
+      el('span', { html: badge(z.value, z.tone) }),
+    ]));
+  });
+}
+
+function renderArchDiagram(container){
+  container.innerHTML = `
+    <div class="arch-col">
+      <div class="arch-node" style="border-color:rgba(225,93,99,.35); background:var(--red-bg);">Source database<span class="an-sub">Plaintext zone</span></div>
+      <div class="arch-down">&darr;</div>
+      <div class="arch-node" style="border-color:rgba(225,93,99,.35); background:var(--red-bg);">PII discovery<span class="an-sub">Plaintext zone</span></div>
+      <div class="arch-down">&darr;</div>
+      <div class="arch-node" style="border-color:rgba(225,93,99,.35); background:var(--red-bg);">Protection policy<span class="an-sub">Plaintext zone</span></div>
+      <div class="arch-down">&darr;</div>
+      <div class="arch-node" style="border-color:rgba(52,214,190,.35); background:var(--teal-bg);">FPE / tokenization<span class="an-sub">Boundary</span></div>
+      <div class="arch-down">&darr;</div>
+      <div class="arch-node" style="border-color:rgba(52,214,190,.35); background:var(--teal-bg);">Protected database<span class="an-sub">Protected zone</span></div>
+      <div class="arch-down">&darr;</div>
+      <div class="arch-node" style="border-color:rgba(156,123,239,.35); background:var(--violet-bg);">Secure vault<span class="an-sub">Restricted vault</span></div>
+      <div class="arch-down">&darr;</div>
+      <div class="arch-node" style="border-color:rgba(76,143,238,.35); background:var(--blue-bg);">Privacy gateway<span class="an-sub">Controlled access</span></div>
+    </div>
+    <div class="arch-split">
+      <div class="arch-col">
+        <div class="arch-down">&darr;</div>
+        <div class="arch-node" style="border-color:rgba(76,143,238,.35); background:var(--blue-bg);">Marketing app<span class="an-sub">Token only</span></div>
+      </div>
+      <div class="arch-col">
+        <div class="arch-down">&darr;</div>
+        <div class="arch-node" style="border-color:rgba(76,143,238,.35); background:var(--blue-bg);">Email provider<span class="an-sub">Resolved server-side</span></div>
+      </div>
+    </div>
+    <div class="arch-down">&darr;</div>
+    <div class="arch-node">Audit log<span class="an-sub">Every event recorded</span></div>
+  `;
+}
+
+/* ==========================================================================
+   8. SOURCE & BATCH
+   ========================================================================== */
+function maskValue(value, type){
+  if(value === null || value === undefined) return '';
+  const s = String(value);
+  if(type === 'email'){
+    const [user, domain] = s.split('@');
+    if(!domain) return '••••••';
+    return `${(user||'').slice(0,1)}${'•'.repeat(Math.max(3,(user||'').length-1))}@${domain}`;
+  }
+  if(type === 'mobile'){
+    return s.length > 4 ? `${'•'.repeat(s.length-4)}${s.slice(-4)}` : '•'.repeat(s.length);
+  }
+  if(type === 'name'){
+    return s.split(' ').map(p=> p.length ? p[0] + '•'.repeat(Math.max(2,p.length-1)) : p).join(' ');
+  }
+  return '•'.repeat(Math.min(8, s.length || 6));
+}
+
+async function loadSourceCustomers(){
+  const wrap = $('#sourceTableWrap');
+  wrap.innerHTML = loadingRow('Loading source customers…');
+  try{
+    const data = await Api.sourceCustomers(state.source.page, state.source.pageSize);
+    const { items, total } = normalizeList(data);
+    state.source.rows = items;
+    state.source.total = total;
+    renderSourceTable();
+  }catch(err){
+    wrap.innerHTML = err.status === 0 ? offlineState('retrySource') : errorState('Could not load source data', err.message, 'retrySource');
+    const retry = $('#retrySource'); if(retry) retry.addEventListener('click', loadSourceCustomers);
+    $('#sourcePager').classList.add('hidden');
+  }
+}
+
+function renderSourceTable(){
+  const wrap = $('#sourceTableWrap');
+  const rows = state.source.rows;
+  if(!rows.length){
+    wrap.innerHTML = emptyState('No source records loaded', 'Click "Load source data" to pull records from the source database.', 'db');
+    $('#sourcePager').classList.add('hidden');
+    return;
+  }
+  const masked = !state.source.masked;
+  const body = rows.map(r=>{
+    const id = r.customer_id ?? r.id ?? '—';
+    const name = r.name ?? '—';
+    const email = r.email ?? '—';
+    const mobile = r.mobile ?? '—';
+    const city = r.city ?? '—';
+    const segment = r.segment ?? '—';
+    const status = r.status ?? 'Pending';
+    return `<tr>
+      <td class="cell-mono">${escapeHtml(id)}</td>
+      <td>${masked ? escapeHtml(maskValue(name,'name')) : escapeHtml(name)}</td>
+      <td class="cell-mono">${masked ? escapeHtml(maskValue(email,'email')) : escapeHtml(email)}</td>
+      <td class="cell-mono">${masked ? escapeHtml(maskValue(mobile,'mobile')) : escapeHtml(mobile)}</td>
+      <td>${escapeHtml(city)}</td>
+      <td>${escapeHtml(segment)}</td>
+      <td>${badge(status, statusTone(status))}</td>
+    </tr>`;
+  }).join('');
+  wrap.innerHTML = `<div class="table-wrap"><table>
+    <thead><tr><th>Customer ID</th><th>Name</th><th>Email</th><th>Mobile</th><th>City</th><th>Segment</th><th>Status</th></tr></thead>
+    <tbody>${body}</tbody>
+  </table></div>`;
+  renderPager($('#sourcePager'), { page:state.source.page, pageSize:state.source.pageSize, total:state.source.total }, (p)=>{
+    state.source.page = p; loadSourceCustomers();
+  });
+}
+
+function renderLatestBatch(batch){
+  if(!batch) return;
+  $('#latestBatchCard').classList.remove('hidden');
+  const grid = $('#latestBatchGrid');
+  const fields = [
+    ['Batch ID', batch.batch_id ?? batch.id ?? '—'],
+    ['Source', batch.source ?? '—'],
+    ['Batch size', batch.batch_size ?? '—'],
+    ['Created at', fmtDate(batch.created_at)],
+    ['Status', badge(batch.status ?? 'Queued', statusTone(batch.status))],
+    ['Records processed', batch.records_processed ?? 0],
+    ['Records protected', batch.records_protected ?? 0],
+    ['Errors', batch.errors ?? 0],
+  ];
+  grid.innerHTML = fields.map(([label, value])=>`
+    <div class="metric-card"><div class="m-label">${escapeHtml(label)}</div><div class="m-value" style="font-size:16px;">${typeof value === 'string' && value.startsWith('<span') ? value : escapeHtml(String(value))}</div></div>
+  `).join('');
+}
+
+async function startBatch(){
+  const btn = $('#btnStartBatch');
+  const payload = {
+    source_name: $('#cfgSourceName').value.trim() || 'source_customers',
+    batch_size: Number($('#cfgBatchSize').value) || 50,
+    mode: $('#cfgMode').value,
+  };
+  btn.disabled = true;
+  const original = btn.innerHTML;
+  btn.innerHTML = '<span class="spinner"></span> Starting…';
+  try{
+    const batch = await Api.runBatch(payload);
+    state.lastBatchId = batch.batch_id ?? batch.id ?? null;
+    renderLatestBatch(batch);
+    showToast('Batch started', `Batch ${state.lastBatchId ?? ''} was submitted to the backend.`, 'info');
+  }catch(err){
+    showToast('Could not start batch', err.message, 'error');
+  }finally{
+    btn.disabled = false; btn.innerHTML = original;
+  }
+}
+
+/* ==========================================================================
+   9. PII DISCOVERY
+   ========================================================================== */
+const NON_SENSITIVE_FIELDS = new Set(['customer_id','city','segment']);
+
+function renderDiscoveryEmptyIfNeeded(){
+  // No auto-fetch — discovery is an explicit action per the spec.
+}
+
+function discoverySummaryDefs(){
+  return [
+    { key:'fields_discovered', label:'Fields discovered', icon:'scan', tone:'blue' },
+    { key:'pii_count', label:'PII fields found', icon:'shield', tone:'amber' },
+    { key:'average_confidence', label:'Average confidence', icon:'check', tone:'teal' },
+    { key:'processing_time_ms', label:'Processing time (ms)', icon:'activity', tone:'violet' },
+  ];
+}
+
+async function runDiscovery(){
+  const btn = $('#btnRunDiscovery');
+  const tableWrap = $('#discoveryTableWrap');
+  const summaryGrid = $('#discoverySummary');
+  btn.disabled = true;
+  const original = btn.innerHTML;
+  btn.innerHTML = '<span class="spinner"></span> Scanning…';
+  tableWrap.innerHTML = loadingRow('Running PII discovery against source fields…');
+  try{
+    const data = await Api.runDiscovery();
+    const fields = data.fields || data.results || [];
+    renderMetricsGrid(summaryGrid, discoverySummaryDefs(), {
+      fields_discovered: data.fields_discovered ?? fields.length,
+      pii_count: data.pii_count ?? fields.filter(f=> (f.category||'').toUpperCase() !== 'NON-SENSITIVE').length,
+      average_confidence: data.average_confidence !== undefined ? `${data.average_confidence}%` : '—',
+      processing_time_ms: data.processing_time_ms ?? '—',
+    }, false);
+    renderDiscoveryTable(fields, data.status);
+    showToast('Discovery complete', `${fields.length} field(s) classified.`, 'info');
+  }catch(err){
+    tableWrap.innerHTML = err.status === 0 ? offlineState('retryDiscovery') : errorState('Discovery failed', err.message, 'retryDiscovery');
+    const retry = $('#retryDiscovery'); if(retry) retry.addEventListener('click', runDiscovery);
+    renderMetricsGrid(summaryGrid, discoverySummaryDefs(), null, true);
+  }finally{
+    btn.disabled = false; btn.innerHTML = original;
+  }
+}
+
+function renderDiscoveryTable(fields, status){
+  const wrap = $('#discoveryTableWrap');
+  if(!fields.length){
+    wrap.innerHTML = emptyState('No fields returned', 'The backend did not return any discovered fields for this run.', 'scan');
+    return;
+  }
+  const rows = fields.map(f=>{
+    const name = f.field ?? f.name ?? '—';
+    const type = f.detected_type ?? f.type ?? '—';
+    const category = (f.category ?? f.pii_category ?? (NON_SENSITIVE_FIELDS.has(name) ? 'NON-SENSITIVE' : '—')).toString().toUpperCase();
+    const confidence = f.confidence !== undefined ? `${f.confidence}%` : '—';
+    const recommendation = f.recommendation ?? f.protection_recommendation ?? '—';
+    const fStatus = f.status ?? status ?? 'Detected';
+    const catTone = category === 'NON-SENSITIVE' ? 'muted' : 'amber';
+    return `<tr>
+      <td class="cell-mono">${escapeHtml(name)}</td>
+      <td>${escapeHtml(type)}</td>
+      <td>${badge(category, catTone)}</td>
+      <td>${escapeHtml(confidence)}</td>
+      <td>${escapeHtml(recommendation)}</td>
+      <td>${badge(fStatus, statusTone(fStatus))}</td>
+    </tr>`;
+  }).join('');
+  wrap.innerHTML = `<div class="table-wrap"><table>
+    <thead><tr><th>Field</th><th>Detected type</th><th>PII category</th><th>Confidence</th><th>Protection recommendation</th><th>Status</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table></div>`;
+}
+
+/* ==========================================================================
+   10. PROTECTION POLICY
+   ========================================================================== */
+const DEFAULT_POLICY_FIELDS = [
+  { field:'name',   category:'NAME',   method:'tokenization', enabled:true,  deterministic:true, original_format:'Free text', protected_format:'Stable token' },
+  { field:'email',  category:'EMAIL',  method:'tokenization', enabled:true,  deterministic:true, original_format:'user@domain.com', protected_format:'EMAIL_xxxxxxxx' },
+  { field:'mobile', category:'PHONE',  method:'fpe',          enabled:true,  deterministic:true, original_format:'10 digits', protected_format:'10 digits' },
+];
+
+const METHOD_OPTIONS = [
+  ['masking','Masking'], ['hashing','Hashing'], ['encryption','Encryption'],
+  ['tokenization','Tokenization'], ['fpe','Format-Preserving Encryption (FPE)'],
+];
+
+async function loadPolicies(){
+  const wrap = $('#policyFieldsWrap');
+  wrap.innerHTML = loadingRow('Loading policy configuration…');
+  try{
+    const data = await Api.getPolicies();
+    const fields = (data && (data.fields || data.policies)) || DEFAULT_POLICY_FIELDS;
+    state.policy.fields = JSON.parse(JSON.stringify(fields));
+    renderPolicyFields();
+  }catch(err){
+    if(err.status === 0){
+      wrap.innerHTML = offlineState('retryPolicy');
+      const retry = $('#retryPolicy'); if(retry) retry.addEventListener('click', loadPolicies);
+    }else{
+      // Fall back to sensible defaults so the operator can still compose a policy to submit.
+      state.policy.fields = JSON.parse(JSON.stringify(DEFAULT_POLICY_FIELDS));
+      renderPolicyFields();
+      showToast('Using default policy template', 'Could not load saved policies from backend: ' + err.message, 'warn');
+    }
+  }
+}
+
+function renderPolicyFields(){
+  const wrap = $('#policyFieldsWrap');
+  const fields = state.policy.fields || [];
+  wrap.innerHTML = '';
+  fields.forEach((f, idx)=>{
+    const card = el('div', { class:'policy-field' });
+    card.innerHTML = `
+      <div class="pf-head">
+        <div>
+          <div class="pf-name">${escapeHtml((f.field||'').toUpperCase())}</div>
+          <div class="pf-category">${escapeHtml(f.category||'')}</div>
+        </div>
+        <label class="switch"><input type="checkbox" data-idx="${idx}" class="pf-enable" ${f.enabled ? 'checked' : ''}/><span class="slider"></span></label>
+      </div>
+      <div class="form-row">
+        <div class="field-group" style="margin-bottom:0;">
+          <label>Protection method</label>
+          <select class="pf-method" data-idx="${idx}">
+            ${METHOD_OPTIONS.map(([v,l])=>`<option value="${v}" ${f.method===v?'selected':''}>${l}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field-group" style="margin-bottom:0;">
+          <label class="mask-toggle" style="margin-top:20px;">
+            <label class="switch"><input type="checkbox" data-idx="${idx}" class="pf-deterministic" ${f.deterministic ? 'checked' : ''}/><span class="slider"></span></label>
+            Deterministic / stable tokenization
+          </label>
+        </div>
+      </div>
+      ${f.method === 'fpe' ? `
+        <div class="fpe-visual">
+          <div><div class="fpe-label">Original format</div><div class="fpe-box">${escapeHtml(f.original_format||'10 digits')}</div></div>
+          <span style="color:var(--text-faint)">&rarr;</span>
+          <div><div class="fpe-label">Protected format</div><div class="fpe-box" style="color:var(--teal)">${escapeHtml(f.protected_format||'10 digits')}</div></div>
+        </div>
+        <div class="field-hint" style="margin-top:8px;">FPE preserves the original format (10 digits in, 10 digits out) while the underlying value is fully protected.</div>
+      ` : `
+        <div class="token-visual">
+          <span class="tv-orig">${escapeHtml((f.field||'VALUE').toUpperCase())}</span>
+          <span class="tv-arrow">&rarr;</span>
+          <span class="tv-new">TOKEN</span>
+        </div>
+      `}
+    `;
+    wrap.appendChild(card);
+  });
+
+  $$('.pf-enable').forEach(inp=> inp.addEventListener('change', onPolicyFieldChange));
+  $$('.pf-method').forEach(sel=> sel.addEventListener('change', onPolicyFieldChange));
+  $$('.pf-deterministic').forEach(inp=> inp.addEventListener('change', onPolicyFieldChange));
+}
+
+function onPolicyFieldChange(e){
+  const idx = Number(e.target.dataset.idx);
+  const field = state.policy.fields[idx];
+  if(e.target.classList.contains('pf-enable')) field.enabled = e.target.checked;
+  if(e.target.classList.contains('pf-deterministic')) field.deterministic = e.target.checked;
+  if(e.target.classList.contains('pf-method')) field.method = e.target.value;
+  state.policy.dirty = true;
+  renderPolicyFields();
+}
+
+async function savePolicy(){
+  const btn = $('#btnSavePolicy');
+  btn.disabled = true;
+  const original = btn.innerHTML;
+  btn.innerHTML = '<span class="spinner"></span> Saving…';
+  try{
+    await Api.savePolicies({ fields: state.policy.fields });
+    showToast('Policy saved', 'The backend confirmed the protection policy was saved.', 'info');
+    state.policy.dirty = false;
+  }catch(err){
+    showToast('Policy not saved', err.message, 'error');
+  }finally{
+    btn.disabled = false; btn.innerHTML = original;
+  }
+}
+
+/* ==========================================================================
+   11. BATCH MONITOR
+   ========================================================================== */
+async function loadBatches(){
+  const wrap = $('#batchTableWrap');
+  wrap.innerHTML = loadingRow('Loading batches…');
+  try{
+    const data = await Api.listBatches();
+    const { items } = normalizeList(data);
+    renderBatchTable(items);
+  }catch(err){
+    wrap.innerHTML = err.status === 0 ? offlineState('retryBatches') : errorState('Could not load batches', err.message, 'retryBatches');
+    const retry = $('#retryBatches'); if(retry) retry.addEventListener('click', loadBatches);
+  }
+}
+
+function renderBatchTable(items){
+  const wrap = $('#batchTableWrap');
+  if(!items.length){
+    wrap.innerHTML = emptyState('No batches yet', 'Start a batch from the Source & Batch page to see it tracked here.', 'activity');
+    return;
+  }
+  const rows = items.map(b=>{
+    const id = b.batch_id ?? b.id ?? '—';
+    const total = b.total_records ?? b.batch_size ?? 0;
+    const protectedCount = b.records_protected ?? 0;
+    const failed = b.errors ?? b.failed ?? 0;
+    const pct = total ? Math.min(100, Math.round((protectedCount/total)*100)) : 0;
+    const status = b.status ?? 'Queued';
+    return `<tr>
+      <td class="cell-mono">${escapeHtml(id)}</td>
+      <td>${escapeHtml(b.source ?? '—')}</td>
+      <td>${fmtDate(b.started_at)}</td>
+      <td>${fmtDate(b.completed_at)}</td>
+      <td>${escapeHtml(total)}</td>
+      <td>${escapeHtml(protectedCount)}</td>
+      <td>${escapeHtml(failed)}</td>
+      <td>
+        ${badge(status, statusTone(status))}
+        <div class="progress-track" style="margin-top:6px; width:90px;"><div class="progress-fill ${status==='Failed'?'red':''}" style="width:${pct}%"></div></div>
+      </td>
+      <td><button class="btn btn-sm" data-batch-id="${escapeHtml(id)}">View</button></td>
+    </tr>`;
+  }).join('');
+  wrap.innerHTML = `<div class="table-wrap"><table>
+    <thead><tr><th>Batch ID</th><th>Source</th><th>Started</th><th>Completed</th><th>Total</th><th>Protected</th><th>Failed</th><th>Status</th><th>Actions</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table></div>`;
+  $$('[data-batch-id]').forEach(btn=> btn.addEventListener('click', ()=> openBatchDetails(btn.dataset.batchId)));
+}
+
+async function openBatchDetails(id){
+  openModal(`Batch ${id}`, loadingRow('Loading batch details…'));
+  try{
+    const b = await Api.getBatch(id);
+    const rows = [
+      ['Batch ID', b.batch_id ?? b.id ?? id],
+      ['Source', b.source ?? '—'],
+      ['Status', b.status ?? '—'],
+      ['Batch size', b.batch_size ?? '—'],
+      ['Records processed', b.records_processed ?? 0],
+      ['Records protected', b.records_protected ?? 0],
+      ['Errors', b.errors ?? 0],
+      ['Created at', fmtDate(b.created_at)],
+      ['Started at', fmtDate(b.started_at)],
+      ['Completed at', fmtDate(b.completed_at)],
+    ];
+    const body = `<dl style="display:grid; grid-template-columns:150px 1fr; gap:9px 12px; margin:0; font-size:13px;">
+      ${rows.map(([k,v])=>`<dt style="color:var(--text-faint)">${escapeHtml(k)}</dt><dd style="margin:0; font-family:var(--font-mono);">${escapeHtml(String(v))}</dd>`).join('')}
+    </dl>`;
+    $('#activeModal .modal-body').innerHTML = body;
+  }catch(err){
+    $('#activeModal .modal-body').innerHTML = err.status === 0 ? offlineState() : errorState('Could not load batch', err.message);
+  }
+}
+
+/* ==========================================================================
+   12. PROTECTED CUSTOMERS
+   ========================================================================== */
+async function loadProtectedCustomers(){
+  const wrap = $('#protectedTableWrap');
+  wrap.innerHTML = loadingRow('Loading protected records…');
+  try{
+    const data = await Api.protectedCustomers(state.protected.page, state.protected.pageSize);
+    const { items, total } = normalizeList(data);
+    state.protected.rows = items;
+    state.protected.total = total;
+    renderProtectedTable();
+  }catch(err){
+    wrap.innerHTML = err.status === 0 ? offlineState('retryProtected') : errorState('Could not load protected customers', err.message, 'retryProtected');
+    const retry = $('#retryProtected'); if(retry) retry.addEventListener('click', loadProtectedCustomers);
+    $('#protectedPager').classList.add('hidden');
+  }
+}
+
+function renderProtectedTable(){
+  const wrap = $('#protectedTableWrap');
+  const rows = state.protected.rows;
+  if(!rows.length){
+    wrap.innerHTML = emptyState('No protected records yet', 'Run a protection batch first, then refresh this view.', 'lock');
+    $('#protectedPager').classList.add('hidden');
+    return;
+  }
+  const body = rows.map(r=>`<tr>
+    <td class="cell-mono">${escapeHtml(r.customer_id ?? r.id ?? '—')}</td>
+    <td class="cell-mono">${escapeHtml(r.name_token ?? r.name ?? '—')}</td>
+    <td class="cell-mono">${escapeHtml(r.email_token ?? r.email ?? '—')}</td>
+    <td class="cell-mono">${escapeHtml(r.protected_mobile ?? r.mobile ?? '—')}</td>
+    <td>${escapeHtml(r.city ?? '—')}</td>
+    <td>${escapeHtml(r.segment ?? '—')}</td>
+  </tr>`).join('');
+  wrap.innerHTML = `<div class="table-wrap"><table>
+    <thead><tr><th>Customer ID</th><th>Name token</th><th>Email token</th><th>Protected mobile</th><th>City</th><th>Segment</th></tr></thead>
+    <tbody>${body}</tbody>
+  </table></div>`;
+  renderPager($('#protectedPager'), { page:state.protected.page, pageSize:state.protected.pageSize, total:state.protected.total }, (p)=>{
+    state.protected.page = p; loadProtectedCustomers();
+  });
+}
+
+async function lookupProtectedCustomer(){
+  const id = $('#protectedSearchInput').value.trim();
+  if(!id){ showToast('Enter a customer ID', 'Type a customer ID to look it up.', 'warn'); return; }
+  const wrap = $('#protectedTableWrap');
+  wrap.innerHTML = loadingRow(`Looking up ${escapeHtml(id)}…`);
+  try{
+    const r = await Api.getCustomer(id);
+    state.protected.rows = [r];
+    state.protected.total = 1;
+    state.protected.page = 1;
+    renderProtectedTable();
+    $('#protectedPager').classList.add('hidden');
+  }catch(err){
+    wrap.innerHTML = err.status === 0 ? offlineState('retryProtected') : errorState('Lookup failed', err.message, 'retryProtected');
+    const retry = $('#retryProtected'); if(retry) retry.addEventListener('click', loadProtectedCustomers);
+  }
+}
+
+/* ==========================================================================
+   13. MARKETING DEMO
+   ========================================================================== */
+async function loadMarketingCustomerOptions(){
+  const select = $('#mktCustomer');
+  select.innerHTML = `<option value="">Loading protected customers…</option>`;
+  try{
+    const data = await Api.protectedCustomers(1, 50);
+    const { items } = normalizeList(data);
+    if(!items.length){
+      select.innerHTML = `<option value="">No protected customers available</option>`;
+      return;
+    }
+    select.innerHTML = items.map(r=>{
+      const id = r.customer_id ?? r.id ?? '';
+      const token = r.email_token ?? r.protected_recipient ?? '—';
+      return `<option value="${escapeHtml(id)}" data-token="${escapeHtml(token)}">${escapeHtml(id)} &middot; ${escapeHtml(token)}</option>`;
+    }).join('');
+  }catch(err){
+    select.innerHTML = `<option value="">Backend offline — cannot load recipients</option>`;
+  }
+}
+
+function setWorkflowStep(step, active){
+  const nodes = $$('#mktWorkflow .wf-node');
+  nodes.forEach(n=> n.classList.toggle('active', n.dataset.step === step && active));
+}
+
+async function sendMarketingEmail(){
+  const select = $('#mktCustomer');
+  const opt = select.options[select.selectedIndex];
+  const customerId = select.value;
+  const protectedRecipient = opt ? opt.dataset.token : '';
+  const subject = $('#mktSubject').value.trim();
+  const message = $('#mktMessage').value.trim();
+  const purpose = $('#mktPurpose').value;
+  const resultBox = $('#mktResult');
+
+  if(!customerId){ showToast('Choose a recipient', 'Select a protected customer before sending.', 'warn'); return; }
+  if(!subject || !message){ showToast('Missing content', 'Add a subject and message before sending.', 'warn'); return; }
+
+  const btn = $('#btnSendEmail');
+  btn.disabled = true;
+  const original = btn.innerHTML;
+  btn.innerHTML = '<span class="spinner"></span> Sending…';
+  resultBox.innerHTML = '';
+
+  const sequence = ['app','token','gateway','vault','provider'];
+  for(const step of sequence){
+    setWorkflowStep(step, true);
+    await new Promise(r=> setTimeout(r, 220));
+  }
+
+  try{
+    const res = await Api.sendEmail({
+      customer_id: customerId,
+      protected_recipient: protectedRecipient,
+      purpose, subject, message,
+    });
+    const sent = res && (res.status === 'sent' || res.success === true || (res.status||'').toString().toLowerCase() === 'success');
+    setWorkflowStep('status', true);
+    setWorkflowStep('audit', true);
+    resultBox.innerHTML = `<div class="banner ${sent ? 'banner-teal' : 'banner-red'}">
+      <svg><use href="#icon-${sent?'check':'x'}"/></svg>
+      <div><strong>${sent ? 'Email sent' : 'Email failed'}</strong><br/>Recipient shown to marketing: <span class="mono">${escapeHtml(protectedRecipient||'—')}</span></div>
+    </div>`;
+    showToast(sent ? 'Email sent' : 'Email failed', 'The privacy gateway processed this request.', sent?'info':'error');
+  }catch(err){
+    resultBox.innerHTML = `<div class="banner banner-red"><svg><use href="#icon-x"/></svg><div><strong>Email failed</strong><br/>${escapeHtml(err.message)}</div></div>`;
+  }finally{
+    btn.disabled = false; btn.innerHTML = original;
+    setTimeout(()=> $$('#mktWorkflow .wf-node').forEach(n=> n.classList.remove('active')), 1400);
+  }
+}
+
+/* ---- bounce handling ---- */
+async function loadBounces(){
+  const wrap = $('#bounceTableWrap');
+  wrap.innerHTML = loadingRow('Loading bounce events…');
+  try{
+    const data = await Api.listBounces();
+    const { items } = normalizeList(data);
+    renderBounceTable(items);
+  }catch(err){
+    wrap.innerHTML = err.status === 0 ? offlineState('retryBounces') : errorState('Could not load bounce events', err.message, 'retryBounces');
+    const retry = $('#retryBounces'); if(retry) retry.addEventListener('click', loadBounces);
+  }
+}
+
+function renderBounceTable(items){
+  const wrap = $('#bounceTableWrap');
+  if(!items.length){
+    wrap.innerHTML = emptyState('No bounce events', 'Bounce events created by provider callbacks will appear here.', 'inbox');
+    return;
+  }
+  const rows = items.map(e=>`<tr>
+    <td class="cell-mono">${escapeHtml(e.event_id ?? e.id ?? '—')}</td>
+    <td class="cell-mono">${escapeHtml(e.protected_recipient ?? e.email_token ?? '—')}</td>
+    <td>${badge(e.event_type ?? 'BOUNCE', 'amber')}</td>
+    <td>${escapeHtml(e.reason ?? '—')}</td>
+    <td>${fmtDate(e.timestamp ?? e.created_at)}</td>
+    <td>${badge(e.status ?? 'Logged', statusTone(e.status))}</td>
+  </tr>`).join('');
+  wrap.innerHTML = `<div class="table-wrap"><table>
+    <thead><tr><th>Event ID</th><th>Protected recipient</th><th>Event type</th><th>Reason</th><th>Timestamp</th><th>Status</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table></div>`;
+}
+
+async function simulateBounceCallback(){
+  const select = $('#mktCustomer');
+  const opt = select.options[select.selectedIndex];
+  const protectedRecipient = opt ? opt.dataset.token : null;
+  if(!protectedRecipient){
+    showToast('No recipient selected', 'Choose a customer on the Send Email tab first so a callback can reference a protected recipient.', 'warn');
+    return;
+  }
+  const btn = $('#btnSimulateBounce');
+  btn.disabled = true;
+  const original = btn.innerHTML;
+  btn.innerHTML = '<span class="spinner"></span> Sending callback…';
+  try{
+    await Api.submitBounce({
+      protected_recipient: protectedRecipient,
+      event_type: 'BOUNCE',
+      reason: 'Mailbox unavailable',
+    });
+    showToast('Callback submitted', 'The provider callback was sent to the webhook endpoint.', 'info');
+    loadBounces();
+  }catch(err){
+    showToast('Callback failed', err.message, 'error');
+  }finally{
+    btn.disabled = false; btn.innerHTML = original;
+  }
+}
+
+/* ==========================================================================
+   14. CONTROLLED REVEAL
+   ========================================================================== */
+async function requestReveal(){
+  const payload = {
+    subject_id: $('#revSubject').value.trim(),
+    field: $('#revField').value,
+    purpose: $('#revPurpose').value,
+    reference: $('#revReference').value.trim(),
+  };
+  if(!payload.subject_id || !payload.reference){
+    showToast('Missing information', 'Subject ID and reference are required.', 'warn');
+    return;
+  }
+  const btn = $('#btnRequestReveal');
+  const resultWrap = $('#revealResultWrap');
+  btn.disabled = true;
+  const original = btn.innerHTML;
+  btn.innerHTML = '<span class="spinner"></span> Requesting…';
+  resultWrap.innerHTML = loadingRow('Waiting for backend authorization decision…');
+  try{
+    const res = await Api.requestReveal(payload);
+    const granted = res && (res.authorized === true || (res.decision||'').toString().toUpperCase() === 'GRANTED' || (res.status||'').toString().toUpperCase() === 'GRANTED');
+    if(granted){
+      resultWrap.innerHTML = `<div class="reveal-result granted">
+        <div class="rr-title"><svg width="18" height="18"><use href="#icon-check"/></svg>Access granted</div>
+        <dl>
+          <dt>Reason</dt><dd>${escapeHtml(res.reason || 'Authorized purpose and role')}</dd>
+          <dt>Field</dt><dd>${escapeHtml(payload.field)}</dd>
+          <dt>Returned value</dt><dd>${escapeHtml(res.value ?? res.revealed_value ?? '—')}</dd>
+          <dt>Audit</dt><dd>Reveal request logged</dd>
+        </dl>
+      </div>`;
+    }else{
+      resultWrap.innerHTML = `<div class="reveal-result denied">
+        <div class="rr-title"><svg width="18" height="18"><use href="#icon-x"/></svg>Access denied</div>
+        <dl>
+          <dt>Reason</dt><dd>${escapeHtml(res && res.reason ? res.reason : 'Insufficient permission or invalid purpose')}</dd>
+          <dt>Field</dt><dd>${escapeHtml(payload.field)}</dd>
+          <dt>Audit</dt><dd>Denied request logged</dd>
+        </dl>
+      </div>`;
+    }
+  }catch(err){
+    resultWrap.innerHTML = err.status === 0 ? offlineState() : errorState('Reveal request failed', err.message);
+  }finally{
+    btn.disabled = false; btn.innerHTML = original;
+  }
+}
+
+/* ==========================================================================
+   15. AUDIT DASHBOARD
+   ========================================================================== */
+const AUDIT_METRICS = [
+  { key:'total_events',       label:'Total events',      icon:'file',   tone:'blue' },
+  { key:'batch_events',       label:'Batch events',      icon:'activity',tone:'violet' },
+  { key:'protection_events',  label:'Protection events', icon:'policy', tone:'teal' },
+  { key:'email_events',       label:'Email events',      icon:'mail',   tone:'blue' },
+  { key:'bounce_events',      label:'Bounce events',     icon:'alert',  tone:'amber' },
+  { key:'reveal_events',      label:'Reveal events',     icon:'eye',    tone:'violet' },
+  { key:'denied_events',      label:'Denied events',     icon:'shield', tone:'red' },
+];
+
+function collectAuditFilters(){
+  return {
+    event_type: $('#afType').value,
+    status: $('#afStatus').value,
+    actor: $('#afActor').value.trim(),
+    date: $('#afDate').value,
+    purpose: $('#afPurpose').value.trim(),
+  };
+}
+
+async function loadAudit(){
+  const wrap = $('#auditTableWrap');
+  const metricsGrid = $('#auditMetricsGrid');
+  renderMetricsGrid(metricsGrid, AUDIT_METRICS, null, false);
+  wrap.innerHTML = loadingRow('Loading audit log…');
+  try{
+    const params = { page: state.audit.page, page_size: state.audit.pageSize, ...state.audit.filters };
+    const data = await Api.getAudit(params);
+    const { items, total } = normalizeList(data.events || data);
+    state.audit.total = total;
+    renderAuditTable(items);
+    renderMetricsGrid(metricsGrid, AUDIT_METRICS, data.summary || data.metrics || {}, false);
+    renderPager($('#auditPager'), { page:state.audit.page, pageSize:state.audit.pageSize, total }, (p)=>{
+      state.audit.page = p; loadAudit();
+    });
+  }catch(err){
+    wrap.innerHTML = err.status === 0 ? offlineState('retryAudit') : errorState('Could not load audit log', err.message, 'retryAudit');
+    const retry = $('#retryAudit'); if(retry) retry.addEventListener('click', loadAudit);
+    renderMetricsGrid(metricsGrid, AUDIT_METRICS, null, true);
+    $('#auditPager').classList.add('hidden');
+  }
+}
+
+function renderAuditTable(items){
+  const wrap = $('#auditTableWrap');
+  if(!items.length){
+    wrap.innerHTML = emptyState('No audit events found', 'Adjust your filters or trigger an action elsewhere in the platform to generate events.', 'file');
+    return;
+  }
+  const rows = items.map(e=>`<tr>
+    <td>${fmtDate(e.timestamp ?? e.created_at)}</td>
+    <td class="cell-mono">${escapeHtml(e.event_id ?? e.id ?? '—')}</td>
+    <td>${escapeHtml(e.actor ?? '—')}</td>
+    <td>${escapeHtml(e.role ?? '—')}</td>
+    <td>${escapeHtml(e.action ?? '—')}</td>
+    <td class="cell-mono">${escapeHtml(e.subject ?? e.subject_id ?? '—')}</td>
+    <td>${escapeHtml(e.field ?? '—')}</td>
+    <td>${escapeHtml(e.purpose ?? '—')}</td>
+    <td>${badge(e.status ?? '—', statusTone(e.status))}</td>
+    <td>${escapeHtml(e.reason ?? '—')}</td>
+  </tr>`).join('');
+  wrap.innerHTML = `<div class="table-wrap"><table>
+    <thead><tr><th>Timestamp</th><th>Event ID</th><th>Actor</th><th>Role</th><th>Action</th><th>Subject</th><th>Field</th><th>Purpose</th><th>Status</th><th>Reason</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table></div>`;
+}
+
+/* ==========================================================================
+   16. EVENT WIRING
+   ========================================================================== */
+function initNav(){
+  $$('.nav-item').forEach(item=>{
+    item.addEventListener('click', ()=> navigateTo(item.dataset.page));
+  });
+  $('#menuToggle').addEventListener('click', ()=> $('#sidebar').classList.toggle('open'));
+  $('#logoutBtn').addEventListener('click', logout);
+  $('#themeToggle').addEventListener('click', toggleTheme);
+}
+
+function toggleTheme(){
+  state.theme = state.theme === 'dark' ? 'light' : 'dark';
+  document.body.setAttribute('data-theme', state.theme);
+  $('#themeToggle').innerHTML = state.theme === 'dark'
+    ? '<svg><use href="#icon-moon"/></svg>'
+    : '<svg><use href="#icon-sun"/></svg>';
+}
+
+function initSourcePage(){
+  $('#btnLoadSource').addEventListener('click', ()=>{ state.source.page = 1; loadSourceCustomers(); });
+  $('#btnRefreshSource').addEventListener('click', loadSourceCustomers);
+  $('#btnStartBatch').addEventListener('click', startBatch);
+  $('#sourceMaskToggle').addEventListener('change', (e)=>{
+    state.source.masked = !e.target.checked;
+    renderSourceTable();
+  });
+}
+
+function initDiscoveryPage(){
+  $('#btnRunDiscovery').addEventListener('click', runDiscovery);
+}
+
+function initPolicyPage(){
+  $('#btnSavePolicy').addEventListener('click', savePolicy);
+  $('#btnResetPolicy').addEventListener('click', loadPolicies);
+}
+
+function initBatchPage(){
+  $('#btnRefreshBatches').addEventListener('click', loadBatches);
+}
+
+function initProtectedPage(){
+  $('#btnRefreshProtected').addEventListener('click', ()=>{ $('#protectedSearchInput').value=''; loadProtectedCustomers(); });
+  $('#btnProtectedSearch').addEventListener('click', lookupProtectedCustomer);
+  $('#protectedSearchInput').addEventListener('keydown', (e)=>{ if(e.key==='Enter') lookupProtectedCustomer(); });
+}
+
+function initMarketingPage(){
+  $$('.tab-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      $$('.tab-btn').forEach(b=> b.classList.remove('active'));
+      $$('.tab-panel').forEach(p=> p.classList.remove('active'));
+      btn.classList.add('active');
+      $('#tab-' + btn.dataset.tab).classList.add('active');
+      if(btn.dataset.tab === 'bounce') loadBounces();
+    });
+  });
+  $('#btnSendEmail').addEventListener('click', sendMarketingEmail);
+  $('#btnRefreshBounces').addEventListener('click', loadBounces);
+  $('#btnSimulateBounce').addEventListener('click', simulateBounceCallback);
+}
+
+function initRevealPage(){
+  $('#btnRequestReveal').addEventListener('click', requestReveal);
+}
+
+function initAuditPage(){
+  $('#btnApplyAuditFilters').addEventListener('click', ()=>{
+    state.audit.filters = collectAuditFilters();
+    state.audit.page = 1;
+    loadAudit();
+  });
+  $('#btnResetAuditFilters').addEventListener('click', ()=>{
+    $('#afType').value=''; $('#afStatus').value=''; $('#afActor').value=''; $('#afDate').value=''; $('#afPurpose').value='';
+    state.audit.filters = {};
+    state.audit.page = 1;
+    loadAudit();
+  });
+  $('#btnRefreshAudit').addEventListener('click', loadAudit);
+}
+
+/* ==========================================================================
+   17. INIT
+   ========================================================================== */
+document.addEventListener('DOMContentLoaded', ()=>{
+  initLogin();
+  initNav();
+  initSourcePage();
+  initDiscoveryPage();
+  initPolicyPage();
+  initBatchPage();
+  initProtectedPage();
+  initMarketingPage();
+  initRevealPage();
+  initAuditPage();
+  updateBackendIndicator();
+});
+</script>
+</body>
+</html>
